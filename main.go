@@ -39,6 +39,8 @@ var (
 	}
 
 	counters = make(map[int]time.Time)
+
+	update = "I've been updated! If modded I now autoban bots that mention buying followers"
 )
 
 
@@ -157,6 +159,7 @@ func main() {
 				}()
 			}
 		} else {
+			botBan(message.Channel, message.Message, &message.User)
 			chat(message.Channel, message.Message, &message.User)
 		}
 	})
@@ -170,7 +173,7 @@ func main() {
 	for _, v := range channels {
 		client.Join(v.Name)
 		log.Println("Joined", v.Name)
-		say(v.Name, "I've been updated! ")
+		say(v.Name, update)
 		v := v
 		go func() {
 			time.Sleep(time.Minute * time.Duration(60))
@@ -335,5 +338,16 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 			message = strings.Replace(message, "*", strconv.Itoa(counter.Count), 1)
 			say(channel, message)
 		}
+	}
+}
+
+
+func botBan(channel string, message string, chUser *twitch.User) {
+	if !channelMod[channel] {
+		return
+	}
+
+	if strings.Contains(message, "http") && strings.Contains(message, "big") && strings.Contains(message, "follows") {
+		say(channel, "/ban " + chUser.Name)
 	}
 }
