@@ -143,7 +143,7 @@ func read() {
 	}
 
 	// Output files.
-	files = []string{"entering", "leaving", "rules", "clap"}
+	files = []string{"entering", "leaving", "rules"}
 	for i := 0; i < len(files); i++ {
 		name := files[i]
 		data, err := ioutil.ReadFile("./pkg/dictionary/" + name + "Dict.json")
