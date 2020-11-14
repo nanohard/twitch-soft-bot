@@ -207,12 +207,6 @@ func read() {
 }
 
 
-func write() {
-
-}
-
-
-
 // Parse chat and respond accordingly.
 func chat(channel string, message string, chUser *twitch.User) {
 	msg := strings.ToLower(message)
@@ -237,8 +231,10 @@ func chat(channel string, message string, chUser *twitch.User) {
 			}
 			if (unicode.IsLetter(a) || unicode.IsLetter(b)) || (unicode.IsPunct(a) && unicode.IsPunct(b)) { // limit false positives
 				log.Println("Skipped word [ og ] in msg", msg)
-				msgCut = msgCut[ind+3:]
-				continue
+				if len(msgCut) > ind+3 {
+					msgCut = msgCut[ind+3:]
+					continue
+				}
 			}
 			if strings.Contains(msg, "tell") || strings.Contains(msg, "say") {
 				var sayPerm bool
