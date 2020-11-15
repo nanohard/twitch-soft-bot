@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -28,6 +29,7 @@ var (
 
 	// Concerning the bot itself.
 	channelMod = make(map[string]bool)
+	channelModTime = make(map[string]time.Time)
 	wantModMessages = []string{
 		"A responsible streamer would mod me",
 		"Feeling so sad right now... being a mod would cheer me up",
@@ -40,9 +42,13 @@ var (
 	}
 
 	counters = make(map[int]time.Time)
-
-	update = "I've been updated! If modded I now autoban bots that mention buying followers"
 )
+
+
+type Chatters struct {
+	ChatterCount int `json:"chatter_count"`
+	Chatters  map[string][]string `json:"chatters"`
+}
 
 
 func init() {
@@ -69,18 +75,23 @@ func init() {
 
 func passCommand(channel string, chUser *twitch.User, command string, args ...string) {
 	switch command {
+	// Internal
+	case "update":
+		commandUpdate(channel, args...)
 	// General
 	case "lurk":
 		commandLurk(channel, chUser)
 	case "pray":
 		commandPray(channel)
 	// Soft Boy (join or depart channels)
-	case "softboy":
+	case "softboy", "softbot", "og_softbot":
 		commandSoftBoy(channel, chUser, args...)
 	case "clap":
 		commandClap(channel, chUser, args...)
 	case "rules":
 		commandRules(channel, args...)
+	case "request":
+		commandRequest(channel, chUser, args...)
 	// Raffle
 	case "raffle":
 		commandRaffle(channel, chUser, args...)
@@ -129,9 +140,9 @@ func commandPray(channel string) {
 func main() {
 	// Check if bot is modded.
 	client.OnUserStateMessage(func(message twitch.UserStateMessage) {
-		// If robo_nano is present
+		// If bot is present
 		if message.User.Name == "og_softbot" {
-			// If robo_nano is not mod
+			// If bot is not mod
 			if _, ok := message.User.Badges["moderator"]; ok {
 				channelMod[message.Channel] = true
 			} else {
@@ -147,17 +158,14 @@ func main() {
 			command := input[0][1:]
 			args := input[1:]
 			passCommand(message.Channel, &message.User, command, args...)
-			if channelMod[message.Channel] == false {
-				go func() {
-					r := random(45, 90)
-					time.Sleep(time.Minute * time.Duration(r))
-					// Check one last time for mod status so a false positive
-					// does not get through.
-					if channelMod[message.Channel] == false {
-						msg := wantModMessages[random(0, len(wantModMessages))]
-						say(message.Channel, msg)
-					}
-				}()
+			if channelMod[message.Channel] == false && channelModTime[message.Channel].Sub(time.Now()) > time.Hour {
+				// Check one last time for mod status so a false positive
+				// does not get through.
+				if channelMod[message.Channel] == false {
+					msg := wantModMessages[random(0, len(wantModMessages))]
+					say(message.Channel, msg)
+					channelModTime[message.Channel] = time.Now()
+				}
 			}
 		} else {
 			botBan(message.Channel, message.Message, &message.User)
@@ -174,16 +182,52 @@ func main() {
 	for _, v := range channels {
 		client.Join(v.Name)
 		log.Println("Joined", v.Name)
-		say(v.Name, update)
+
+
 		v := v
+
+		chatters := Chatters{
+			ChatterCount: 0,
+			Chatters:     make(map[string][]string),
+		}
+
+		go func() {
+			time.Sleep(time.Minute * time.Duration(73))
+
+			// If broadcaster is in chatroom display queued update messages.
+			resp, err := http.Get("https: // tmi.twitch.tv/group/user/" + v.Name + "/chatters")
+			if err != nil {
+				log.Println("updates", err.Error())
+				return
+			}
+			defer resp.Body.Close()
+
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				log.Println("updates ioutil.ReadAll()", err.Error())
+			}
+			json.Unmarshal(body, &chatters)
+
+			if chatters.Chatters["broadcaster"] != nil && len(v.Updates) > 0 {
+				say(v.Name, "@"+v.Name+" "+v.Updates[0])
+				_, v.Updates = v.Updates[0], v.Updates[1:]
+				if err := db.DB.UpdateField(&models.Channel{Name: v.Name}, "Updates", v.Updates) ; err != nil {
+					log.Println(v.Name, "db.UpdateField() Channel.Updates", err.Error())
+				}
+			}
+		}()
+
 		go func() {
 			time.Sleep(time.Minute * time.Duration(60))
+
+			// Display quotes if there are 11+.
 			if len(v.Quotes) > 10 {
 				r := random(0, len(v.Quotes))
 				say(v.Name, v.Quotes[r])
 			}
 		}()
 	}
+
 
 	// Shutdown logic --------------------------------------------------------
 
@@ -351,4 +395,37 @@ func botBan(channel string, message string, chUser *twitch.User) {
 	if strings.Contains(message, "http") && strings.Contains(message, "big") && strings.Contains(message, "follows") {
 		say(channel, "/ban " + chUser.Name)
 	}
+}
+
+
+func commandRequest(channel string, chUser *twitch.User, args ...string) {
+	// Help.
+	if len(args) == 0 {
+		say(channel, "@"+chUser.DisplayName + " Usage: !request this is your feature request or bug!")
+		return
+	}
+
+	createIssue(channel, chUser, args...)
+}
+
+
+func commandUpdate(channel string, args ...string) {
+	var channels []models.Channel
+
+	if err := db.DB.All(&channels); err != nil {
+		log.Println("commandUpdate() db.Get()", err.Error())
+		say(channel, "commandUpdate() db.Get() " +err.Error())
+		return
+	}
+
+	for _, v := range channels {
+		v.Updates = append(v.Updates, strings.Join(args, " "))
+		if err := db.DB.Save(&v); err != nil {
+			log.Println("commandUpdate() db.Save()", err.Error())
+			say(channel, "commandUpdate() db.Save() " + err.Error())
+			return
+		}
+	}
+	say(channel, "Update message sent")
+
 }
