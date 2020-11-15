@@ -306,7 +306,6 @@ func chat(channel string, message string, chUser *twitch.User) {
 						return
 					}
 				}
-				log.Println("No word recognized in msg, using `will`", msg)
 				r := random(0, len(ogQuestion["will"]))
 				say(channel, ogQuestion["will"][r])
 				return
