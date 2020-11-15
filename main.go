@@ -118,7 +118,7 @@ func createUser(channel string, displayName string) {
 		Tickets: 0,
 		Raffles: make(map[string]int),
 	}); err != nil {
-		log.Println("creatuUser(): db.Save()", err)
+		log.Println(channel, "creatuUser(): db.Save()", err)
 		say(channel, "@" + displayName + " Error " + err.Error())
 		return
 	}
@@ -197,14 +197,14 @@ func main() {
 			// If broadcaster is in chatroom display queued update messages.
 			resp, err := http.Get("https: // tmi.twitch.tv/group/user/" + v.Name + "/chatters")
 			if err != nil {
-				log.Println("updates", err.Error())
+				log.Println(v.Name, "updates", err.Error())
 				return
 			}
 			defer resp.Body.Close()
 
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				log.Println("updates ioutil.ReadAll()", err.Error())
+				log.Println(v.Name, "updates ioutil.ReadAll()", err.Error())
 			}
 			json.Unmarshal(body, &chatters)
 
@@ -261,8 +261,6 @@ func main() {
 
 func commandDefault(chUser *twitch.User, channel string, com string, args ...string) {
 	// vars: $streamer, $user, $target, $followage, $lastplaying
-	// log.Println(command)
-	// log.Println(args)
 
 	permission := permission(chUser)
 	mod := true
@@ -307,14 +305,14 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 		if strings.Contains(message, "$followage") {
 			resp, err := http.Get("https://api.crunchprank.net/twitch/followage/" + channel + "/" + chUser.Name)
 			if err != nil {
-				log.Println("$follwage crunchprank.net error", err)
+				log.Println(channel, "$follwage crunchprank.net error", err)
 				return
 			}
 			defer resp.Body.Close()
 
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				log.Println("ioutil.ReadAll() $followage", err)
+				log.Println(channel, "ioutil.ReadAll() $followage", err)
 			}
 			followage := string(body)
 			message = strings.Replace(message, "$followage", followage, -1)
@@ -331,14 +329,14 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 			target = strings.Replace(target, "@", "", 1)
 			resp, err := http.Get("https://api.crunchprank.net/twitch/game/" + target)
 			if err != nil {
-				log.Println("$lastplaying crunchprank.net error", err)
+				log.Println(channel, "$lastplaying crunchprank.net error", err)
 				return
 			}
 			defer resp.Body.Close()
 
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				log.Println("ioutil.ReadAll() $lastplaying", err)
+				log.Println(channel, "ioutil.ReadAll() $lastplaying", err)
 			}
 			lastPlaying := string(body)
 			message = strings.Replace(message, "$lastplaying", lastPlaying, -1)
@@ -358,14 +356,14 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 		// Counters.
 		var counter models.Counter
 		if err := db.DB.Select(q.Eq("Channel", channel), q.Eq("Name", com)).First(&counter); err != nil {
-			log.Println("defaultCommand() counter db.DB.Select", err)
+			log.Println(channel, "defaultCommand() counter db.DB.Select", err)
 			return
 		}
 		message := counter.Message
 		// +
 		if len(args) == 0 && (mod || !counter.ModOnly) && time.Now().Sub(counters[counter.ID]) > time.Second*10 {
 			if err := db.DB.UpdateField(&models.Counter{ID: counter.ID}, "Count", counter.Count+1); err != nil {
-				log.Println("counter +", err)
+				log.Println(channel, "counter +", err)
 			}
 			message = strings.Replace(message, "*", strconv.Itoa(counter.Count+1), 1)
 			// Cooldown to avoid mistakes
@@ -374,7 +372,7 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 			// -
 		} else if len(args) == 1 && args[0] == "-" && mod {
 			if err := db.DB.UpdateField(&models.Counter{ID: counter.ID}, "Count", counter.Count-1); err != nil {
-				log.Println("counter +", err)
+				log.Println(channel, "counter +", err)
 			}
 			message = strings.Replace(message, "*", strconv.Itoa(counter.Count-1), 1)
 			say(channel, message)
@@ -416,7 +414,7 @@ func commandUpdate(channel string, chUser *twitch.User, args ...string) {
 	var channels []models.Channel
 
 	if err := db.DB.All(&channels); err != nil {
-		log.Println("commandUpdate() db.Get()", err.Error())
+		log.Println(channel, "commandUpdate() db.Get()", err.Error())
 		say(channel, "commandUpdate() db.Get() " +err.Error())
 		return
 	}
@@ -424,7 +422,7 @@ func commandUpdate(channel string, chUser *twitch.User, args ...string) {
 	for _, v := range channels {
 		v.Updates = append(v.Updates, strings.Join(args, " "))
 		if err := db.DB.Save(&v); err != nil {
-			log.Println("commandUpdate() db.Save()", err.Error())
+			log.Println(channel, "commandUpdate() db.Save()", err.Error())
 			say(channel, "commandUpdate() db.Save() " + err.Error())
 			return
 		}

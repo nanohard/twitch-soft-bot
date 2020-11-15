@@ -79,7 +79,7 @@ func commandCom(channel string, chUser *twitch.User, request ...string) {
 			Message: message,
 			ModPerm: modPerm,
 		}); err != nil {
-			log.Println("command add: db.DB.Save()", err)
+			log.Println(channel, "command add: db.DB.Save()", err)
 			say(channel, "@"+chUser.DisplayName+" Error " + err.Error())
 			return
 		}
@@ -90,13 +90,13 @@ func commandCom(channel string, chUser *twitch.User, request ...string) {
 	case "rm", "remove", "del", "delete":
 		var command models.Command
 		if err := db.DB.Select(q.Eq("Channel", channel), q.Eq("Name", request[1])).First(&command); err != nil {
-			log.Println("command rm: db.DB.Select()", err)
+			log.Println(channel, "command rm: db.DB.Select()", err)
 			say(channel, "@"+chUser.DisplayName+" Command does not exist")
 			return
 		}
 
 		if err := db.DB.DeleteStruct(&command); err != nil {
-			log.Println("command rm: db.DB.DeleteStruct()", err)
+			log.Println(channel, "command rm: db.DB.DeleteStruct()", err)
 			say(channel, "@"+chUser.DisplayName+" Error")
 			return
 		}

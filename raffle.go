@@ -74,7 +74,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 			ID:         name,
 			MaxTickets: maxTickets,
 		}); err != nil {
-			log.Println("raffle create: db.Save()", err)
+			log.Println(channel, "raffle create: db.Save()", err)
 			say(channel, "@"+chUser.DisplayName+" Error "+err.Error())
 			return
 		}
@@ -88,12 +88,12 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 		}
 		var raffle models.Raffle
 		if err := db.DB.Select(q.Eq("ID", strings.ToLower(args[1]))).First(&raffle); err != nil {
-			log.Println("raffle delete: db.Select()", err)
+			log.Println(channel, "raffle delete: db.Select()", err)
 			say(channel, "@"+chUser.DisplayName+" Error "+err.Error())
 			return
 		}
 		if err := db.DB.DeleteStruct(&raffle); err != nil {
-			log.Println("raffle delete: db.DeleteStruct()", err)
+			log.Println(channel, "raffle delete: db.DeleteStruct()", err)
 			say(channel, "@"+chUser.DisplayName+" Error "+err.Error())
 			return
 		}
@@ -101,7 +101,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 		// Delete map from all users
 		var users []models.User
 		if err := db.DB.All(&users); err != nil {
-			log.Println("raffle delete: db.All()", err)
+			log.Println(channel, "raffle delete: db.All()", err)
 			say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			return
 		}
@@ -109,7 +109,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 		for i := 0; i < len(users); i++ {
 			delete(users[i].Raffles, raffle.ID)
 			if err := db.DB.Update(users[i]); err != nil {
-				log.Println("raffle delete: db.Update()", err)
+				log.Println(channel, "raffle delete: db.Update()", err)
 				say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 				return
 			}
@@ -124,7 +124,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 		}
 		var raffle models.Raffle
 		if err := db.DB.Select(q.Eq("ID", strings.ToLower(args[1]))).First(&raffle); err != nil {
-			log.Println("raffle pick: db.Select()", err)
+			log.Println(channel, "raffle pick: db.Select()", err)
 			say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			return
 		}
@@ -134,7 +134,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 		remove(raffle.Users, r)
 
 		if err := db.DB.Save(&raffle); err != nil {
-			log.Println("raffle pick: db.Save()", err)
+			log.Println(channel, "raffle pick: db.Save()", err)
 			say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			return
 		}
@@ -155,12 +155,12 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 			if err == storm.ErrNotFound {
 				createUser(channel, userRaw)
 				if err := db.DB.Select(q.Eq("ID", userRaw)).First(&user); err != nil {
-					log.Println("raffle give: db.Select()", err)
+					log.Println(channel, "raffle give: db.Select()", err)
 					say(channel,"@" + chUser.DisplayName + " Error " + err.Error())
 					return
 				}
 			} else {
-				log.Println("raffle give: db.Select()", err)
+				log.Println(channel, "raffle give: db.Select()", err)
 				say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 				return
 			}
@@ -169,7 +169,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 		// Give tickets
 		tickets, err := strconv.Atoi(args[2])
 		if err != nil {
-			log.Println("raffle give: strconv.Atoi()", err)
+			log.Println(channel, "raffle give: strconv.Atoi()", err)
 			say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			return
 		}
@@ -177,7 +177,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 		ticketsNow := user.Tickets + tickets
 		if ticketsNow >= 0 {
 			if err := db.DB.UpdateField(&models.User{ID: user.ID}, "Tickets", ticketsNow); err != nil {
-				log.Println("raffle give: db.UpdateField()", err)
+				log.Println(channel, "raffle give: db.UpdateField()", err)
 				say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 				return
 			}
@@ -185,7 +185,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 	case "list":
 		var raffles []models.Raffle
 		if err := db.DB.All(&raffles); err != nil {
-			log.Println("raffle list: db.All()", err)
+			log.Println(channel, "raffle list: db.All()", err)
 			say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			return
 		}
@@ -215,7 +215,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 				createUser(channel, chUser.DisplayName)
 				say(channel, "@" + chUser.DisplayName + " You have no tickets. Get fucked.")
 			} else {
-				log.Println("raffle enter: db.Select()", err)
+				log.Println(channel, "raffle enter: db.Select()", err)
 				say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			}
 			return
@@ -231,7 +231,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 			if err == storm.ErrNotFound {
 				say(channel, "@" + chUser.DisplayName + " Spell much? That raffle doesn't exist.")
 			} else {
-				log.Println("raffle enter: db.Select()", err)
+				log.Println(channel, "raffle enter: db.Select()", err)
 				say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			}
 			return
@@ -243,7 +243,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 		if len(args) == 3 {
 			ticketsEntered, err = strconv.Atoi(args[2])
 			if err != nil {
-				log.Println("raffle give: strconv.Atoi()", err)
+				log.Println(channel, "raffle give: strconv.Atoi()", err)
 				say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 				return
 			}
@@ -254,7 +254,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 		ticketsNow := user.Tickets - ticketsEntered
 		if ticketsNow >= 0 {
 			if err := db.DB.UpdateField(&models.User{ID: user.ID}, "Tickets", ticketsNow); err != nil {
-				log.Println("raffle enter: db.UpdateField()", err)
+				log.Println(channel, "raffle enter: db.UpdateField()", err)
 				say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 				return
 			}
@@ -269,7 +269,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 			raffle.Users = append(raffle.Users, chUser.DisplayName)
 		}
 		if err := db.DB.Save(&raffle); err != nil {
-			log.Println("raffle enter: db.Save()", err)
+			log.Println(channel, "raffle enter: db.Save()", err)
 			say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			return
 		}
@@ -277,7 +277,7 @@ func commandRaffle(channel string, chUser *twitch.User, args ...string) {
 		// Update !myraffles
 		user.Raffles[raffle.ID] += ticketsEntered
 		if err := db.DB.Update(user); err != nil {
-			log.Println("raffle enter: db.Update()", err)
+			log.Println(channel, "raffle enter: db.Update()", err)
 			say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			return
 		}
@@ -292,14 +292,14 @@ func commandMyTickets(channel string, chUser *twitch.User)  {
 		if err == storm.ErrNotFound {
 			createUser(channel, chUser.DisplayName)
 			if err := db.DB.Select(q.Eq("ID", chUser.DisplayName)).First(&user); err != nil {
-				log.Println("commandMyTickets: db.Select()", err)
+				log.Println(channel, "commandMyTickets: db.Select()", err)
 				say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 				return
 			}
 			say(channel, "@" + chUser.DisplayName + " You have no tickets. Get fucked.")
 			return
 		} else {
-			log.Println("commandMyTickets: db.Select()", err)
+			log.Println(channel, "commandMyTickets: db.Select()", err)
 			say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			return
 		}
@@ -315,12 +315,12 @@ func commandMyRaffles(channel string, chUser *twitch.User) {
 		if err == storm.ErrNotFound {
 			createUser(channel, chUser.DisplayName)
 			if err := db.DB.Select(q.Eq("ID", chUser.DisplayName)).First(&user); err != nil {
-				log.Println("commandMyRaffles: db.Select()", err)
+				log.Println(channel, "commandMyRaffles: db.Select()", err)
 				say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 				return
 			}
 		} else {
-			log.Println("commandMyRaffles: db.Select()", err)
+			log.Println(channel, "commandMyRaffles: db.Select()", err)
 			say(channel, "@" + chUser.DisplayName + " Error " + err.Error())
 			return
 		}

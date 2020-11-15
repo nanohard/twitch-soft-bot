@@ -95,7 +95,7 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 			Name: chUser.Name,
 		}
 		if err := db.DB.Save(&c); err != nil {
-			log.Println("softboy join: db.Save()", err)
+			log.Println(channel, "softboy join: db.Save()", err)
 			say(channel, "@"+chUser.DisplayName+" Error "+err.Error())
 			return
 		}
@@ -109,7 +109,7 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 		}
 		client.Depart(channel)
 		if err := db.DB.DeleteStruct(models.Channel{Name: chUser.Name}); err != nil {
-			log.Println("softboy leave: db.DeleteStruct()", err)
+			log.Println(channel, "softboy leave: db.DeleteStruct()", err)
 			say(channel, "@"+chUser.DisplayName+" Error "+err.Error())
 			return
 		}
@@ -300,7 +300,7 @@ func chat(channel string, message string, chUser *twitch.User) {
 						if (unicode.IsLetter(a) || unicode.IsLetter(b)) || (unicode.IsPunct(a) && unicode.IsPunct(b)) { // limit false positives
 							continue
 						}
-						log.Println("Recognized word [", k, "] in msg", msg)
+						log.Println(channel, "Recognized word [", k, "] in msg", msg)
 						r := random(0, len(ogQuestion[k]))
 						say(channel, v[r])
 						return
@@ -331,7 +331,7 @@ func chat(channel string, message string, chUser *twitch.User) {
 					if (unicode.IsLetter(a) || unicode.IsLetter(b)) || (unicode.IsPunct(a) && unicode.IsPunct(b)) { // limit false positives
 						continue
 					}
-					log.Println("Recognized word [", k, "] in msg", msg)
+					log.Println(channel, "Recognized word [", k, "] in msg", msg)
 					r := random(0, len(ogChat[k]))
 					say(channel, v[r])
 					return
@@ -363,7 +363,7 @@ func chat(channel string, message string, chUser *twitch.User) {
 				if (unicode.IsLetter(a) || unicode.IsLetter(b)) || (unicode.IsPunct(a) && unicode.IsPunct(b)) { // limit false positives
 					continue
 				}
-				log.Println("Recognized word [", k, "] in msg", msg)
+				log.Println(channel, "Recognized word [", k, "] in msg", msg)
 				r := random(0, len(randomChat[k]))
 				say(channel, v[r])
 				randomChatTime[channel] = time.Now()

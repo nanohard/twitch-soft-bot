@@ -96,7 +96,7 @@ func getUser(channel string) models.User {
 	// Get user data from Twitch channel name.
 	var user models.User
 	if err := db.DB.One("TwitchChannel", channel, &user); err != nil {
-		log.Println("helpers: getUser() db.DB.One()", err)
+		log.Println(channel, "helpers: getUser() db.DB.One()", err)
 	}
 	return user
 }

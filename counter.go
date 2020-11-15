@@ -70,7 +70,7 @@ func commandCounter(channel string, chUser *twitch.User, args ...string) {
 			ModOnly: modOnly,
 			Count:   count,
 		}); err != nil {
-			log.Println("counter add: db.Save()", err)
+			log.Println(channel, "counter add: db.Save()", err)
 			say(channel, "@"+chUser.DisplayName+" Error")
 			return
 		}
@@ -81,13 +81,13 @@ func commandCounter(channel string, chUser *twitch.User, args ...string) {
 	case "rm", "remove", "del", "delete":
 		var counter models.Counter
 		if err := db.DB.Select(q.Eq("Channel", channel), q.Eq("Name", args[1])).First(&counter); err != nil {
-			log.Println("counter add: db.Select()", err)
+			log.Println(channel, "counter add: db.Select()", err)
 			say(channel, "@"+chUser.DisplayName+" Error")
 			return
 		}
 
 		if err := db.DB.DeleteStruct(&counter); err != nil {
-			log.Println("counter add: db.DeleteStruct()", err)
+			log.Println(channel, "counter add: db.DeleteStruct()", err)
 			say(channel, "@"+chUser.DisplayName+" Error")
 			return
 		}

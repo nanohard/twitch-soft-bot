@@ -44,7 +44,7 @@ func commandQuote(channel string, chUser *twitch.User, args ...string) {
 		num := len(ch.Quotes)
 
 		if err := db.DB.Update(&ch); err != nil {
-			log.Println("quote add: db.Save()", err)
+			log.Println(channel, "quote add: db.Save()", err)
 			say(channel, "@"+chUser.DisplayName+" Error")
 			return
 		}
