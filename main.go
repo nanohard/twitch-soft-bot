@@ -206,7 +206,10 @@ func main() {
 				log.Println(v.Name, "updates ioutil.ReadAll()", err.Error())
 				return
 			}
-			json.Unmarshal(body, &chatters)
+			if err := json.Unmarshal(body, &chatters); err != nil {
+				log.Println(v.Name, "updates json.Unmarshall()", err.Error())
+				return
+			}
 
 			if chatters.Chatters["broadcaster"] != nil && len(v.Updates) > 0 {
 				say(v.Name, "@"+v.Name+" "+v.Updates[0])
