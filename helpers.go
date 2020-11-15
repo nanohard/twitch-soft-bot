@@ -1,17 +1,27 @@
 package main
 
 import (
+	"context"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"net/mail"
+	"net/smtp"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gempir/go-twitch-irc/v2"
+	"github.com/google/go-github/v32/github"
 
 	"github.com/nanohard/twitch-soft-bot/pkg/db"
 	"github.com/nanohard/twitch-soft-bot/pkg/models"
+
+	"golang.org/x/oauth2"
 )
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
@@ -119,4 +129,78 @@ func broadcaster(chUser *twitch.User) bool {
 
 func say(channel string, msg string) {
 	client.Say(channel, msg)
+}
+
+
+func createIssue(channel string, chUser *twitch.User, args ...string) {
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB")},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	git := github.NewClient(tc)
+
+	body := strings.Join(args, " ")
+	state := "open"
+	labels := []string{"twitch request"}
+
+	issue := github.IssueRequest{
+		Title:     nil,
+		Body:      &body,
+		Labels:    &labels,
+		Assignee:  nil,
+		State:     &state,
+		Milestone: nil,
+		Assignees: nil,
+	}
+
+	iss, _, err := git.Issues.Create(ctx, "nanohard", "twitch-soft-bot", &issue)
+	if err != nil {
+		say(channel, "Error " + err.Error())
+		log.Println(channel, "createIssue()", err.Error())
+		return
+	}
+	num := strconv.Itoa(iss.GetNumber())
+	say(channel, "@"+chUser.DisplayName + " Issue #"+ num + " has been created")
+}
+
+
+func sendEmail(toAddr string, subject string, msg string) {
+	from := mail.Address{Address: os.Getenv("BOT_EMAIL")}
+	to := mail.Address{Address: toAddr}
+
+	header := make(map[string]string)
+	header["From"] = from.String()
+	header["To"] = to.String()
+	header["Subject"] = subject
+	header["MIME-Version"] = "1.0"
+	header["Content-Type"] = "text/plain; charset=\"utf-8\""
+	header["Content-Transfer-Encoding"] = "base64"
+
+	message := ""
+	for k, v := range header {
+		message += fmt.Sprintf("%s: %s\r\n", k, v)
+	}
+	message += "\r\n" + base64.StdEncoding.EncodeToString([]byte(msg))
+
+	// Set up authentication information.
+	auth := smtp.PlainAuth(
+		"",
+		os.Getenv("SES_USER"),
+		os.Getenv("SES_PASS"),
+		"email-smtp.us-east-1.amazonaws.com",
+	)
+	// Connect to the server, authenticate, set the sender and recipient,
+	// and send the email all in one step.
+	err := smtp.SendMail(
+		"email-smtp.us-east-1.amazonaws.com:587",
+		auth,
+		from.Address,
+		[]string{to.Address},
+		[]byte(message),
+	)
+	if err != nil {
+		log.Println("smtp.SendMail():", err)
+	}
 }
