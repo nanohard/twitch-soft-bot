@@ -230,7 +230,6 @@ func chat(channel string, message string, chUser *twitch.User) {
 				b = beforeWord[0]
 			}
 			if (unicode.IsLetter(a) || unicode.IsLetter(b)) || (unicode.IsPunct(a) && unicode.IsPunct(b)) { // limit false positives
-				log.Println("Skipped word [ og ] in msg", msg)
 				if len(msgCut) > ind+3 {
 					msgCut = msgCut[ind+3:]
 					continue
@@ -299,7 +298,6 @@ func chat(channel string, message string, chUser *twitch.User) {
 							}
 						}
 						if (unicode.IsLetter(a) || unicode.IsLetter(b)) || (unicode.IsPunct(a) && unicode.IsPunct(b)) { // limit false positives
-							log.Println("Skipped word [", k, "] in msg", msg)
 							continue
 						}
 						log.Println("Recognized word [", k, "] in msg", msg)
@@ -332,7 +330,6 @@ func chat(channel string, message string, chUser *twitch.User) {
 						}
 					}
 					if (unicode.IsLetter(a) || unicode.IsLetter(b)) || (unicode.IsPunct(a) && unicode.IsPunct(b)) { // limit false positives
-						log.Println("Skipped word [", k, "] in msg", msg)
 						continue
 					}
 					log.Println("Recognized word [", k, "] in msg", msg)
@@ -365,7 +362,6 @@ func chat(channel string, message string, chUser *twitch.User) {
 					}
 				}
 				if (unicode.IsLetter(a) || unicode.IsLetter(b)) || (unicode.IsPunct(a) && unicode.IsPunct(b)) { // limit false positives
-					log.Println("Skipped word [", k, "] in msg", msg)
 					continue
 				}
 				log.Println("Recognized word [", k, "] in msg", msg)
