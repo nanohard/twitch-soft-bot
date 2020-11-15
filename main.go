@@ -159,13 +159,9 @@ func main() {
 			args := input[1:]
 			passCommand(message.Channel, &message.User, command, args...)
 			if channelMod[message.Channel] == false && channelModTime[message.Channel].Sub(time.Now()) > time.Hour {
-				// Check one last time for mod status so a false positive
-				// does not get through.
-				if channelMod[message.Channel] == false {
-					msg := wantModMessages[random(0, len(wantModMessages))]
-					say(message.Channel, msg)
-					channelModTime[message.Channel] = time.Now()
-				}
+				msg := wantModMessages[random(0, len(wantModMessages))]
+				say(message.Channel, msg)
+				channelModTime[message.Channel] = time.Now()
 			}
 		} else {
 			botBan(message.Channel, message.Message, &message.User)
