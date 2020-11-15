@@ -77,7 +77,7 @@ func passCommand(channel string, chUser *twitch.User, command string, args ...st
 	switch command {
 	// Internal
 	case "update":
-		commandUpdate(channel, args...)
+		commandUpdate(channel, chUser, args...)
 	// General
 	case "lurk":
 		commandLurk(channel, chUser)
@@ -409,7 +409,10 @@ func commandRequest(channel string, chUser *twitch.User, args ...string) {
 }
 
 
-func commandUpdate(channel string, args ...string) {
+func commandUpdate(channel string, chUser *twitch.User, args ...string) {
+	if chUser.Name != "nanohard_" {
+		return
+	}
 	var channels []models.Channel
 
 	if err := db.DB.All(&channels); err != nil {
