@@ -280,7 +280,7 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 	// Commands.
 	var command models.Command
 	if err := db.DB.Select(q.Eq("Channel", channel), q.Eq("Name", com)).First(&command); err != nil {
-		log.Println("defaultCommand() command db.DB.Select", err)
+		foundCommand = false
 	} else {
 		foundCommand = true
 		message := command.Message
