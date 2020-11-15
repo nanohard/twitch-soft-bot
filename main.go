@@ -57,18 +57,22 @@ func init() {
 	db.DB, err = storm.Open("db")
 	if err != nil {
 		log.Println("storm.Open()", err)
+		panic("Could not init")
 	}
 
 	if err := db.DB.Init(&models.Channel{}); err != nil {
 		log.Println("db.DB.Init()", err)
+		panic("Could not init")
 	}
 
 	if err := db.DB.Init(&models.User{}); err != nil {
 		log.Println("db.DB.Init()", err)
+		panic("Could not init")
 	}
 
 	if err := db.DB.Init(&models.Counter{}); err != nil {
 		log.Println("db.DB.Init()", err)
+		panic("Could not init")
 	}
 }
 
@@ -174,14 +178,13 @@ func main() {
 	var channels []models.Channel
 	if err := db.DB.All(&channels); err != nil {
 		log.Println("main: db.All()", err)
+		panic("Could not init")
 	}
 	for _, v := range channels {
 		client.Join(v.Name)
 		log.Println("Joined", v.Name)
 
-
 		v := v
-
 		chatters := Chatters{
 			ChatterCount: 0,
 			Chatters:     make(map[string][]string),
@@ -201,6 +204,7 @@ func main() {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				log.Println(v.Name, "updates ioutil.ReadAll()", err.Error())
+				return
 			}
 			json.Unmarshal(body, &chatters)
 
@@ -309,6 +313,7 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				log.Println(channel, "ioutil.ReadAll() $followage", err)
+				return
 			}
 			followage := string(body)
 			message = strings.Replace(message, "$followage", followage, -1)
@@ -333,6 +338,7 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				log.Println(channel, "ioutil.ReadAll() $lastplaying", err)
+				return
 			}
 			lastPlaying := string(body)
 			message = strings.Replace(message, "$lastplaying", lastPlaying, -1)
@@ -360,6 +366,7 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 		if len(args) == 0 && (mod || !counter.ModOnly) && time.Now().Sub(counters[counter.ID]) > time.Second*10 {
 			if err := db.DB.UpdateField(&models.Counter{ID: counter.ID}, "Count", counter.Count+1); err != nil {
 				log.Println(channel, "counter +", err)
+				return
 			}
 			message = strings.Replace(message, "*", strconv.Itoa(counter.Count+1), 1)
 			// Cooldown to avoid mistakes
@@ -369,6 +376,7 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 		} else if len(args) == 1 && args[0] == "-" && mod {
 			if err := db.DB.UpdateField(&models.Counter{ID: counter.ID}, "Count", counter.Count-1); err != nil {
 				log.Println(channel, "counter +", err)
+				return
 			}
 			message = strings.Replace(message, "*", strconv.Itoa(counter.Count-1), 1)
 			say(channel, message)

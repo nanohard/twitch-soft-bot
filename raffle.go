@@ -17,7 +17,7 @@ import (
 
 func init() {
 	if err := db.DB.Init(&models.Raffle{}); err != nil {
-		log.Println("db.DB.Init()", err)
+		log.Fatalln("db.DB.Init()", err)
 	}
 }
 
