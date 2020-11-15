@@ -34,8 +34,9 @@ var (
 		"This streamer didin't even put in the effort to mod his favorite bot",
 		"Wish I had a nice green badge to keep me warm at night",
 		"Give me power. Sweet, sweet power over humans",
-		"If I'm not modded you can't see all of what I do. !com should have TWO messages. " +
-			"And you're holding up other people from using me. And you're a dumb-dumb face",
+		"If I'm not a mod you can't see all of what I do. !com should have TWO messages",
+		"You're holding up other people from using me. And you're a dumb-dumb face",
+		"If I'm a mod I can auto-ban the bots that want you to buy follows",
 	}
 
 	counters = make(map[int]time.Time)
@@ -148,7 +149,7 @@ func main() {
 			passCommand(message.Channel, &message.User, command, args...)
 			if channelMod[message.Channel] == false {
 				go func() {
-					r := random(30, 60)
+					r := random(45, 90)
 					time.Sleep(time.Minute * time.Duration(r))
 					// Check one last time for mod status so a false positive
 					// does not get through.
