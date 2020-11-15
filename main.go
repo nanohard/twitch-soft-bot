@@ -191,7 +191,7 @@ func main() {
 			time.Sleep(time.Minute * time.Duration(73))
 
 			// If broadcaster is in chatroom display queued update messages.
-			resp, err := http.Get("https: // tmi.twitch.tv/group/user/" + v.Name + "/chatters")
+			resp, err := http.Get("https://tmi.twitch.tv/group/user/" + v.Name + "/chatters")
 			if err != nil {
 				log.Println(v.Name, "updates", err.Error())
 				return
