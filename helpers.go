@@ -141,12 +141,18 @@ func createIssue(channel string, chUser *twitch.User, args ...string) {
 
 	git := github.NewClient(tc)
 
+	var title string
 	body := strings.Join(args, " ")
 	state := "open"
 	labels := []string{"twitch request"}
+	if len(body) > 60 {
+		title = body[:60]
+	} else {
+		title = body
+	}
 
 	issue := github.IssueRequest{
-		Title:     nil,
+		Title:     &title,
 		Body:      &body,
 		Labels:    &labels,
 		Assignee:  nil,
