@@ -191,7 +191,7 @@ func main() {
 		}
 
 		go func() {
-			time.Sleep(time.Minute * time.Duration(73))
+			// time.Sleep(time.Minute * time.Duration(73))
 
 			// If broadcaster is in chatroom display queued update messages.
 			resp, err := http.Get("https://tmi.twitch.tv/group/user/" + v.Name + "/chatters")
@@ -210,14 +210,15 @@ func main() {
 				log.Println(v.Name, "updates json.Unmarshall()", err.Error())
 				return
 			}
-
-			if chatters.Chatters["broadcaster"] != nil && len(v.Updates) > 0 {
-				say(v.Name, "@"+v.Name+" "+v.Updates[0])
-				_, v.Updates = v.Updates[0], v.Updates[1:]
-				if err := db.DB.UpdateField(&models.Channel{Name: v.Name}, "Updates", v.Updates) ; err != nil {
-					log.Println(v.Name, "db.UpdateField() Channel.Updates", err.Error())
-				}
-			}
+			log.Println(chatters.Chatters)
+			// if chatters.Chatters["broadcaster"] != nil && len(v.Updates) > 0 {
+			// 	say(v.Name, "@"+v.Name+" "+v.Updates[0])
+			// 	_, v.Updates = v.Updates[0], v.Updates[1:]
+			// 	if err := db.DB.UpdateField(&models.Channel{Name: v.Name}, "Updates", v.Updates) ; err != nil {
+			// 		log.Println(v.Name, "db.UpdateField() Channel.Updates", err.Error())
+			// 	}
+			// }
+			time.Sleep(time.Minute * time.Duration(73))
 		}()
 
 		go func() {
@@ -361,7 +362,6 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 		// Counters.
 		var counter models.Counter
 		if err := db.DB.Select(q.Eq("Channel", channel), q.Eq("Name", com)).First(&counter); err != nil {
-			log.Println(channel, "defaultCommand() counter db.DB.Select", err)
 			return
 		}
 		message := counter.Message
