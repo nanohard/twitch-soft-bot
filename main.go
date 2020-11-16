@@ -230,7 +230,7 @@ func main() {
 				log.Println(v.Name, "updates json.Unmarshall()", err.Error())
 				return
 			}
-			log.Println(chatters.List.Broadcaster[0])
+			log.Println(chatters.List.Broadcaster)
 			// if chatters.Chatters["broadcaster"] != nil && len(v.Updates) > 0 {
 			// 	say(v.Name, "@"+v.Name+" "+v.Updates[0])
 			// 	_, v.Updates = v.Updates[0], v.Updates[1:]
