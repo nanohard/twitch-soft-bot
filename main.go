@@ -189,7 +189,6 @@ func main() {
 	var channels []models.Channel
 	if err := db.DB.All(&channels); err != nil {
 		log.Println("main: db.All()", err)
-		panic("Could not init")
 	}
 	for _, v := range channels {
 		client.Join(v.Name)
@@ -222,7 +221,7 @@ func main() {
 			if len(chatters.List.Broadcaster) > 0 && len(v.Updates) > 0 {
 				say(v.Name, "@"+v.Name+" "+v.Updates[0])
 				_, v.Updates = v.Updates[0], v.Updates[1:]
-				if err := db.DB.UpdateField(&models.Channel{Name: v.Name}, "Updates", v.Updates) ; err != nil {
+				if err := db.DB.UpdateField(&models.Channel{ID: v.ID}, "Updates", v.Updates) ; err != nil {
 					log.Println(v.Name, "db.UpdateField() Channel.Updates", err.Error())
 				}
 			}
