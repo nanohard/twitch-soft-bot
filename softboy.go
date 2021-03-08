@@ -436,7 +436,7 @@ func chat(channel string, message string, chUser *twitch.User) {
 					say(channel, "I'm gonna clap that "+strings.Join(s[1:], " ")+"!")
 				case 3:
 					r := strconv.Itoa(random(1, 10))
-					say(channel, "Calculating clapability of "+strings.Join(s[1:],
+					say(channel, "Calculating clapability of "+strings.Join(s,
 						" ")+"... Clapability is " + r+"/10")
 				}
 
