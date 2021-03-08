@@ -32,6 +32,7 @@ var (
 	clapBlacklist []string
 
 	ogStr = regexp.MustCompile(`og`)
+	al = regexp.MustCompile("[^a-zA-Z]")
 )
 
 func init() {
@@ -426,7 +427,19 @@ func chat(channel string, message string, chUser *twitch.User) {
 				if len(s) > 5 || len(s) == 2 && s[1] == "" {
 					continue
 				}
-				say(channel, "I'd love to clap " + strings.Join(s, " "))
+				// Remove any end punctuation
+				s[len(s)-1] = al.ReplaceAllString(s[len(s)-1], "")
+				switch random(1, 3) {
+				case 1:
+					say(channel, "I'd love to clap "+strings.Join(s, " "))
+				case 2:
+					say(channel, "I'm gonna clap that "+strings.Join(s[1:], " ")+"!")
+				case 3:
+					r := strconv.Itoa(random(1, 10))
+					say(channel, "Calculating clapability of "+strings.Join(s[1:],
+						" ")+"... Clapability is " + r+"/10")
+				}
+
 				clapTime[channel] = time.Now()
 				return
 			}
