@@ -429,15 +429,20 @@ func chat(channel string, message string, chUser *twitch.User) {
 				}
 				// Remove any end punctuation
 				s[len(s)-1] = al.ReplaceAllString(s[len(s)-1], "")
-				switch random(1, 3) {
+				switch random(1, 4) {
 				case 1:
 					say(channel, "I'd love to clap "+strings.Join(s, " "))
 				case 2:
-					say(channel, "I'm gonna clap that "+strings.Join(s[1:], " ")+"!")
+					if strings.HasSuffix(s[len(s)-1], "s") {
+						say(channel, "I'm gonna clap those "+strings.Join(s[1:], " ")+"!")
+					} else {
+						say(channel, "I'm gonna clap that "+strings.Join(s[1:], " ")+"!")
+					}
 				case 3:
-					r := strconv.Itoa(random(1, 10))
-					say(channel, "Calculating clapability of "+strings.Join(s,
-						" ")+"... Clapability is " + r+"/10")
+					say(channel, "Yeah, I've clapped "+strings.Join(s, " ")+". No big deal")
+				case 4:
+					r := strconv.Itoa(random(1, 999))
+					say(channel, "Clapibility of "+strings.Join(s, " ")+" calculated at "+r+"/1. Proceeding to clap...")
 				}
 
 				clapTime[channel] = time.Now()
