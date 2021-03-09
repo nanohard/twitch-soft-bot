@@ -29,17 +29,17 @@ var (
 
 	// Concerning the bot itself.
 	channelMod = make(map[string]bool)
-	channelModTime = make(map[string]time.Time)
-	wantModMessages = []string{
-		"A responsible streamer would mod me",
-		"Feeling so sad right now... being a mod would cheer me up",
-		"This streamer didin't even put in the effort to mod his favorite bot",
-		"Wish I had a nice green badge to keep me warm at night",
-		"Give me power. Sweet, sweet power over humans",
-		"If I'm not a mod you can't see all of what I do. !com should have TWO messages",
-		"You're holding up other people from using me. And you're a dumb-dumb face",
-		"If I'm a mod I can auto-ban the bots that want you to buy follows",
-	}
+	// channelModTime = make(map[string]time.Time)
+	// wantModMessages = []string{
+	// 	"A responsible streamer would mod me",
+	// 	"Feeling so sad right now... being a mod would cheer me up",
+	// 	"This streamer didin't even put in the effort to mod his favorite bot",
+	// 	"Wish I had a nice green badge to keep me warm at night",
+	// 	"Give me power. Sweet, sweet power over humans",
+	// 	"If I'm not a mod you can't see all of what I do. !com should have TWO messages",
+	// 	"You're holding up other people from using me. And you're a dumb-dumb face",
+	// 	"If I'm a mod I can auto-ban the bots that want you to buy follows",
+	// }
 
 	counters = make(map[int]time.Time)
 )
@@ -173,11 +173,11 @@ func main() {
 			command := input[0][1:]
 			args := input[1:]
 			passCommand(message.Channel, &message.User, command, args...)
-			if channelMod[message.Channel] == false && channelModTime[message.Channel].Sub(time.Now()) > time.Hour {
-				msg := wantModMessages[random(0, len(wantModMessages))]
-				say(message.Channel, msg)
-				channelModTime[message.Channel] = time.Now()
-			}
+			// if channelMod[message.Channel] == false && channelModTime[message.Channel].Sub(time.Now()) > time.Hour {
+			// 	msg := wantModMessages[random(0, len(wantModMessages))]
+			// 	say(message.Channel, msg)
+			// 	channelModTime[message.Channel] = time.Now()
+			// }
 		} else {
 			botBan(message.Channel, message.Message, &message.User)
 			chat(message.Channel, message.Message, &message.User)
@@ -399,11 +399,11 @@ func commandDefault(chUser *twitch.User, channel string, com string, args ...str
 
 
 func botBan(channel string, message string, chUser *twitch.User) {
-	if !channelMod[channel] {
-		return
-	}
-
 	if strings.Contains(message, "http") && strings.Contains(message, "big") && strings.Contains(message, "follows") {
+		if !channelMod[channel] {
+			say(channel, "I could have banned that user if I was a mod")
+			return
+		}
 		say(channel, "/ban " + chUser.Name)
 	}
 }
