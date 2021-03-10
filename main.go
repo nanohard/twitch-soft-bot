@@ -182,6 +182,7 @@ func main() {
 		allChannels = append(allChannels, v.Name)
 		channelOffline[v.Name] <- true
 	}
+	writeChannels()  // write list of channels, for my personal use
 
 	// Get app access token for TwitchAPI.
 	// Token expires in 10 days, renew every 7 days.

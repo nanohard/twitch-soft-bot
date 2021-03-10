@@ -106,6 +106,9 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 		randomChatTime[channel] = time.Time{}
 		channelOffline[channel] <- true
 		say(channel, "The OG Soft Boy will be in your channel in 5 minutes homie. Welcome to the hug gang.")
+
+		// Write channels to txt file.
+		writeChannels()
 	case "leave":
 		if !broadcaster(chUser) {
 			return
@@ -130,6 +133,7 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 		delete(randomChatTime, channel)
 		delete(channelOffline, channel)
 		say(channel, "You're too hard to be a Soft Boy. Open-mouth kisses. I'm out.")
+		writeChannels()
 	}
 
 }

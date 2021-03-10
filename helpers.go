@@ -212,19 +212,18 @@ func sendEmail(toAddr string, subject string, msg string) {
 }
 
 
-// func subscribeStatus(userID string) {
-// 	// Subscribe to all users to see when online
-// 	// Using Webhook because lib does not yet implement EventSub
-// 	streamStatus, err := helixClient.PostWebhookSubscription(&helix.WebhookSubscriptionPayload{
-// 		Mode: "subscribe",
-// 		// sub to all users
-// 		Topic:        "https://api.twitch.tv/helix/streams?user_id=" + userID,
-// 		Callback:     "https://bot.nanohard.net/stream-status",
-// 		LeaseSeconds: 864000,
-// 		Secret:       "",
-// 	})
-// 	if err != nil {
-// 		log.Println("helixClient.PostWebhookSubscription", err)
-// 	}
-// 	log.Println(streamStatus.ResponseCommon)
-// }
+func writeChannels() {
+	// Write channels to txt file.
+	f, err := os.Create("channels.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	for _, word := range allChannels {
+		_, err := f.WriteString(word + "\n")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
