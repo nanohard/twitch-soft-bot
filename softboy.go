@@ -91,7 +91,6 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 	}
 	switch args[0] {
 	case "join":
-		client.Join(chUser.Name)
 		c := models.Channel{
 			Name: chUser.Name,
 		}
@@ -100,22 +99,36 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 			say(channel, "@"+chUser.DisplayName+" Error "+err.Error())
 			return
 		}
+		// add channel to global var
+		allChannels = append(allChannels, chUser.Name)
 		// Set channel vars to avoid map lookup error.
-		incomingChatTime[chUser.Name] = time.Time{}
-		randomChatTime[chUser.Name] = time.Time{}
-		say(channel, "The OG Soft Boy is in your channel homie. Welcome to the hug gang.")
+		incomingChatTime[channel] = time.Time{}
+		randomChatTime[channel] = time.Time{}
+		channelOffline[channel] <- true
+		say(channel, "The OG Soft Boy will be in your channel in 5 minutes homie. Welcome to the hug gang.")
 	case "leave":
 		if !broadcaster(chUser) {
 			return
 		}
-		client.Depart(channel)
+		channelOffline[channel] <- true
+		ircClient.Depart(channel)
 		if err := db.DB.DeleteStruct(models.Channel{Name: chUser.Name}); err != nil {
 			log.Println(channel, "softboy leave: db.DeleteStruct()", err)
 			say(channel, "@"+chUser.DisplayName+" Error "+err.Error())
 			return
 		}
+
+		// remove channel from var
+		for i, v := range allChannels {
+			if v == channel {
+				allChannels = remove(allChannels, i)
+			}
+		}
+
+		// delete time tables associated w/ channel
 		delete(incomingChatTime, channel)
 		delete(randomChatTime, channel)
+		delete(channelOffline, channel)
 		say(channel, "You're too hard to be a Soft Boy. Open-mouth kisses. I'm out.")
 	}
 
@@ -429,7 +442,7 @@ func chat(channel string, message string, chUser *twitch.User) {
 				}
 				// Remove any end punctuation
 				s[len(s)-1] = al.ReplaceAllString(s[len(s)-1], "")
-				switch random(1, 4) {
+				switch random(1, 5) {
 				case 1:
 					say(channel, "I'd love to clap "+strings.Join(s, " "))
 				case 2:
@@ -441,7 +454,7 @@ func chat(channel string, message string, chUser *twitch.User) {
 				case 3:
 					say(channel, "Yeah, I've clapped "+strings.Join(s, " ")+". No big deal")
 				case 4:
-					r := strconv.Itoa(random(1, 999))
+					r := strconv.Itoa(random(1, 1000))
 					say(channel, "Clapibility of "+strings.Join(s, " ")+" calculated at "+r+"/1. Proceeding to clap...")
 				}
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,20 +15,24 @@ import (
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/q"
 	"github.com/gempir/go-twitch-irc/v2"
-
 	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/nanohard/twitch-soft-bot/pkg/db"
 	"github.com/nanohard/twitch-soft-bot/pkg/models"
+
+	"github.com/nicklaw5/helix"
 )
 
 
 var (
-	client = twitch.NewClient(os.Getenv("TWITCH_USER"), os.Getenv("TWITCH_OAUTH"))
+	ircClient   = twitch.NewClient(os.Getenv("TWITCH_USER"), os.Getenv("TWITCH_OAUTH"))
+	helixClient = &helix.Client{}
 	mainChannel = os.Getenv("TWITCH_CHANNEL")
 
 	// Concerning the bot itself.
 	channelMod = make(map[string]bool)
+	channelOffline = make(map[string]chan bool)
+	allChannels []string
 	// channelModTime = make(map[string]time.Time)
 	// wantModMessages = []string{
 	// 	"A responsible streamer would mod me",
@@ -43,23 +47,6 @@ var (
 
 	counters = make(map[int]time.Time)
 )
-
-
-type Chatters struct {
-	ChatterCount int `json:"chatter_count"`
-	List List `json:"chatters"`
-}
-
-
-type List struct {
-	Broadcaster []string `json:"broadcaster"`
-	Vips        []string `json:"vips"`
-	Moderators  []string `json:"moderators"`
-	Staff       []string `json:"staff"`
-	Admins      []string `json:"admins"`
-	GlobalMods  []string `json:"global_mods"`
-	Viewers     []string `json:"viewers"`
-}
 
 
 func init() {
@@ -153,8 +140,13 @@ func commandPray(channel string) {
 
 
 func main() {
+	// Start callback API for TwitchAPI
+	var wait time.Duration
+	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
+	flag.Parse()
+
 	// Check if bot is modded.
-	client.OnUserStateMessage(func(message twitch.UserStateMessage) {
+	ircClient.OnUserStateMessage(func(message twitch.UserStateMessage) {
 		// If bot is present
 		if message.User.Name == "og_softbot" {
 			// If bot is not mod
@@ -167,76 +159,98 @@ func main() {
 	})
 
 	// Register Twitch chat hook.
-	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
+	ircClient.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		if message.Message[0] == '!' {
 			input := strings.Split(message.Message, " ")
 			command := input[0][1:]
 			args := input[1:]
 			passCommand(message.Channel, &message.User, command, args...)
-			// if channelMod[message.Channel] == false && channelModTime[message.Channel].Sub(time.Now()) > time.Hour {
-			// 	msg := wantModMessages[random(0, len(wantModMessages))]
-			// 	say(message.Channel, msg)
-			// 	channelModTime[message.Channel] = time.Now()
-			// }
 		} else {
 			botBan(message.Channel, message.Message, &message.User)
 			chat(message.Channel, message.Message, &message.User)
 		}
 	})
 
-	client.Join(mainChannel)
+	ircClient.Join(mainChannel)
 
 	var channels []models.Channel
 	if err := db.DB.All(&channels); err != nil {
 		log.Println("main: db.All()", err)
 	}
+	// Load global vars on program start.
 	for _, v := range channels {
-		client.Join(v.Name)
-		log.Println("Joined", v.Name)
-
-		v := v
-		var chatters *Chatters
-
-		go func() {
-			time.Sleep(time.Minute * time.Duration(73))
-
-			// If broadcaster is in chatroom display queued update messages.
-			resp, err := http.Get("https://tmi.twitch.tv/group/user/" + v.Name + "/chatters")
-			if err != nil {
-				log.Println(v.Name, "updates", err.Error())
-				return
-			}
-			defer resp.Body.Close()
-
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				log.Println(v.Name, "updates ioutil.ReadAll()", err.Error())
-				return
-			}
-			if err := json.Unmarshal(body, &chatters); err != nil {
-				log.Println(v.Name, "updates json.Unmarshall()", err.Error())
-				return
-			}
-
-			if len(chatters.List.Broadcaster) > 0 && len(v.Updates) > 0 {
-				say(v.Name, "@"+v.Name+" "+v.Updates[0])
-				_, v.Updates = v.Updates[0], v.Updates[1:]
-				if err := db.DB.UpdateField(&models.Channel{ID: v.ID}, "Updates", v.Updates) ; err != nil {
-					log.Println(v.Name, "db.UpdateField() Channel.Updates", err.Error())
-				}
-			}
-		}()
-
-		go func() {
-			time.Sleep(time.Minute * time.Duration(60))
-
-			// Display quotes if there are 11+.
-			if len(v.Quotes) > 10 {
-				r := random(0, len(v.Quotes))
-				say(v.Name, v.Quotes[r])
-			}
-		}()
+		allChannels = append(allChannels, v.Name)
+		channelOffline[v.Name] <- true
 	}
+
+	// Get app access token for TwitchAPI.
+	// Token expires in 10 days, renew every 7 days.
+	go func() {
+		var err error
+		helixClient, err = helix.NewClient(&helix.Options{
+			ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
+			ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
+		})
+		if err != nil {
+			log.Fatalln("Could not get twitch app access token phase 1: " + err.Error())
+		}
+
+		resp, err := helixClient.RequestAppAccessToken([]string{"user:read:email"})
+		if err != nil {
+			log.Fatalln("Could not get twitch app access token phase 2: " + err.Error())
+		}
+		// log.Printf("%+v\n", resp)
+
+		// Set the access token on the helixClient
+		helixClient.SetAppAccessToken(resp.Data.AccessToken)
+		time.Sleep(time.Hour * 168)
+	}()
+
+	// Get stream status (online/offline)
+	go func() {
+		for {
+			// Comapare live channels to all channels and depart offline channels
+			offlineChannels := allChannels
+			for _, name := range allChannels {
+				stream, err := helixClient.GetStreams(&helix.StreamsParams{
+					First:      0,
+					Type:       "",
+					UserIDs:    nil,
+					UserLogins: []string{name},
+				})
+				if err != nil {
+					log.Println("get stream status error", err)
+				}
+				// Channel is live, join it and run processes.
+				if len(stream.Data.Streams) > 0 {
+					if offline := <-channelOffline[name]; offline {
+						channelOffline[name] <- false
+						ircClient.Join(name)
+						run(name)
+					}
+
+					// remove channel from var.
+					for i, v := range offlineChannels {
+						if name == v {
+							offlineChannels = remove(offlineChannels, i)
+						}
+					}
+				}
+				// Twitch allows 800 requests per minute.
+				// This will allow us up to 600 channels per minute
+				time.Sleep(time.Millisecond * 100)
+			}
+			// Depart offline channels and stop processes from run().
+			for _, v := range offlineChannels {
+				ircClient.Depart(v)
+				channelOffline[v] <- true
+			}
+			// Run every 5 minutes
+			time.Sleep(time.Minute * 5)
+		}
+	}()
+
+
 
 
 	// Shutdown logic --------------------------------------------------------
@@ -253,6 +267,15 @@ func main() {
 		<-gracefulStop
 		log.Println("Preparing to shut down...")
 
+		// Helix connection
+		// Create a deadline to wait for.
+		// ctx, cancel := context.WithTimeout(context.Background(), wait)
+		// defer cancel()
+		// Doesn't block if no connections, but will otherwise wait
+		// until the timeout deadline.
+		// srv.Shutdown(ctx)
+
+		// Local connection
 		// Create a deadline to wait for.
 		defer db.DB.Close()
 
@@ -262,7 +285,7 @@ func main() {
 	// End Shutdown logic ---------------------------------------------------------
 
 	// Connect to Twitch.
-	err := client.Connect()
+	err := ircClient.Connect()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -441,5 +464,50 @@ func commandUpdate(channel string, chUser *twitch.User, args ...string) {
 		}
 	}
 	say(channel, "Update message sent")
+}
 
+
+func run(channel string)  {
+	var c models.Channel
+	if err := db.DB.One("Name", channel, c); err != nil {
+		log.Println("run() db.One()", err)
+	}
+
+	go func() {
+		for {
+			select {
+			case offline := <- channelOffline[channel]:
+				if offline {
+					break
+				}
+			default:
+				if len(c.Updates) > 0 {
+					say(channel, "@"+channel+" "+c.Updates[0])
+					_, c.Updates = c.Updates[0], c.Updates[1:]
+					if err := db.DB.UpdateField(&models.Channel{ID: c.ID}, "Updates", c.Updates); err != nil {
+						log.Println(c.Name, "db.UpdateField() Channel.Updates", err.Error())
+					}
+				}
+			}
+			time.Sleep(time.Minute * time.Duration(73))
+		}
+	}()
+
+	go func() {
+		for {
+			select {
+			case offline := <-channelOffline[channel]:
+				if offline {
+					break
+				}
+			default:
+				// Display quotes if there are 11+.
+				if len(c.Quotes) > 10 {
+					r := random(0, len(c.Quotes))
+					say(c.Name, c.Quotes[r])
+				}
+			}
+			time.Sleep(time.Minute * time.Duration(60))
+		}
+	}()
 }

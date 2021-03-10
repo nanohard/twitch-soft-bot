@@ -128,7 +128,7 @@ func broadcaster(chUser *twitch.User) bool {
 
 
 func say(channel string, msg string) {
-	client.Say(channel, msg)
+	ircClient.Say(channel, msg)
 }
 
 
@@ -210,3 +210,21 @@ func sendEmail(toAddr string, subject string, msg string) {
 		log.Println("smtp.SendMail():", err)
 	}
 }
+
+
+// func subscribeStatus(userID string) {
+// 	// Subscribe to all users to see when online
+// 	// Using Webhook because lib does not yet implement EventSub
+// 	streamStatus, err := helixClient.PostWebhookSubscription(&helix.WebhookSubscriptionPayload{
+// 		Mode: "subscribe",
+// 		// sub to all users
+// 		Topic:        "https://api.twitch.tv/helix/streams?user_id=" + userID,
+// 		Callback:     "https://bot.nanohard.net/stream-status",
+// 		LeaseSeconds: 864000,
+// 		Secret:       "",
+// 	})
+// 	if err != nil {
+// 		log.Println("helixClient.PostWebhookSubscription", err)
+// 	}
+// 	log.Println(streamStatus.ResponseCommon)
+// }
