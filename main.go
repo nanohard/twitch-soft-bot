@@ -172,6 +172,7 @@ func main() {
 	})
 
 	ircClient.Join(mainChannel)
+	log.Println("joined main channel")
 
 	var channels []models.Channel
 	if err := db.DB.All(&channels); err != nil {
@@ -180,6 +181,7 @@ func main() {
 	// Load global vars on program start.
 	for _, v := range channels {
 		allChannels = append(allChannels, v.Name)
+		log.Println(v.Name)
 		channelOffline[v.Name] <- true
 	}
 	writeChannels()  // write list of channels, for my personal use
