@@ -104,7 +104,7 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 		// Set channel vars to avoid map lookup error.
 		incomingChatTime[channel] = time.Time{}
 		randomChatTime[channel] = time.Time{}
-		channelOffline[channel] <- true
+		channelOffline[channel] = nil
 		say(channel, "The OG Soft Boy will be in your channel in 5 minutes homie. Welcome to the hug gang.")
 
 		// Write channels to txt file.

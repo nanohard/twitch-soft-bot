@@ -182,7 +182,7 @@ func main() {
 	for _, v := range channels {
 		allChannels = append(allChannels, v.Name)
 		log.Println(v.Name)
-		channelOffline[v.Name] <- true
+		channelOffline[v.Name] = nil
 	}
 	writeChannels()  // write list of channels, for my personal use
 
@@ -226,11 +226,9 @@ func main() {
 				}
 				// Channel is live, join it and run processes.
 				if len(stream.Data.Streams) > 0 {
-					if offline := <-channelOffline[name]; offline {
-						channelOffline[name] <- false
-						ircClient.Join(name)
-						run(name)
-					}
+					channelOffline[name] = nil
+					ircClient.Join(name)
+					run(name)
 
 					// remove channel from var.
 					for i, v := range offlineChannels {
