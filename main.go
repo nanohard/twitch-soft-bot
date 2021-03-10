@@ -470,7 +470,7 @@ func commandUpdate(channel string, chUser *twitch.User, args ...string) {
 
 func run(channel string)  {
 	var c models.Channel
-	if err := db.DB.One("Name", channel, c); err != nil {
+	if err := db.DB.One("Name", channel, &c); err != nil {
 		log.Println("run() db.One()", err)
 	}
 
