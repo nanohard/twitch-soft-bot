@@ -185,7 +185,6 @@ func main() {
 	// Load global vars on program start.
 	for _, v := range channels {
 		allChannels = append(allChannels, v.Name)
-		channelOffline[v.Name] = nil
 	}
 	writeChannels()  // write list of channels, for my personal use
 
