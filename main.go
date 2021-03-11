@@ -184,15 +184,6 @@ func main() {
 	}
 	// Load global vars on program start.
 	for _, v := range channels {
-		for i, qt := range v.Quotes {
-			nq := strings.TrimSuffix(qt, "- 0001-01-01 00:00:00 +0000 UTC)")
-			nq = nq+")"
-			v.Quotes[i] = nq
-		}
-		if err := db.DB.Update(&v); err != nil {
-			log.Println("fixing Quotes db.Update() error", err.Error())
-			return
-		}
 		allChannels = append(allChannels, v.Name)
 	}
 	writeChannels()  // write list of channels, for my personal use
