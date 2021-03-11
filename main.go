@@ -491,6 +491,7 @@ func run(channel string)  {
 		for {
 			select {
 			case <-channelOffline[channel]:
+				done.Done()
 				break
 			default:
 				time.Sleep(time.Minute * time.Duration(73))
@@ -502,7 +503,6 @@ func run(channel string)  {
 					}
 				}
 			}
-			done.Done()
 		}
 	}()
 
@@ -510,6 +510,7 @@ func run(channel string)  {
 		for {
 			select {
 			case <-channelOffline[channel]:
+				done.Done()
 				break
 			default:
 				time.Sleep(time.Minute * time.Duration(60))
@@ -519,7 +520,6 @@ func run(channel string)  {
 					say(c.Name, c.Quotes[r])
 				}
 			}
-			done.Done()
 		}
 	}()
 }
