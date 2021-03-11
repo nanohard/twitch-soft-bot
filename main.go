@@ -247,7 +247,9 @@ func main() {
 			for _, v := range offlineChannels {
 				ircClient.Depart(v)
 				log.Println("departed", v)
-				channelOffline[v] <- true
+				if channelOffline[v] == nil {
+					channelOffline[v] <- true
+				}
 			}
 			// Run every 5 minutes
 			time.Sleep(time.Minute * 5)
