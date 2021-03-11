@@ -250,16 +250,12 @@ func main() {
 			}
 			// Depart offline channels and stop processes from run().
 			for _, v := range offlineChannels {
-				ircClient.Depart(v)
-				log.Println("departed", v)
-				// log.Println("checking channel", v)
 				if _, exist := channelOffline[v]; exist {
-					// log.Println("channel exists, attempting to close", v)
+					ircClient.Depart(v)
+					log.Println("departed", v)
 					if _, ok := <-channelOffline[v]; ok {
-						// log.Println("closing channel", v)
 						close(channelOffline[v])
 						delete(channelOffline, v)
-						// log.Println("close sent to channel", v)
 					}
 				}
 			}
