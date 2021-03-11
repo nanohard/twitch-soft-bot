@@ -188,24 +188,26 @@ func main() {
 	// Get app access token for TwitchAPI.
 	// Token expires in 10 days, renew every 7 days.
 	go func() {
-		var err error
-		helixClient, err = helix.NewClient(&helix.Options{
-			ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
-			ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
-		})
-		if err != nil {
-			log.Fatalln("Could not get twitch app access token phase 1: " + err.Error())
-		}
+		for {
+			var err error
+			helixClient, err = helix.NewClient(&helix.Options{
+				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
+				ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
+			})
+			if err != nil {
+				log.Fatalln("Could not get twitch app access token phase 1: " + err.Error())
+			}
 
-		resp, err := helixClient.RequestAppAccessToken([]string{"user:read:email"})
-		if err != nil {
-			log.Fatalln("Could not get twitch app access token phase 2: " + err.Error())
-		}
-		// log.Printf("%+v\n", resp)
+			resp, err := helixClient.RequestAppAccessToken([]string{"user:read:email"})
+			if err != nil {
+				log.Fatalln("Could not get twitch app access token phase 2: " + err.Error())
+			}
+			// log.Printf("%+v\n", resp)
 
-		// Set the access token on the helixClient
-		helixClient.SetAppAccessToken(resp.Data.AccessToken)
-		time.Sleep(time.Hour * 168)
+			// Set the access token on the helixClient
+			helixClient.SetAppAccessToken(resp.Data.AccessToken)
+			time.Sleep(time.Hour * 168)
+		}
 	}()
 
 	// Get stream status (online/offline)
@@ -228,6 +230,7 @@ func main() {
 					channelOffline[name] = nil
 					ircClient.Join(name)
 					run(name)
+					log.Println("joined", name)
 
 					// remove channel from var.
 					for i, v := range offlineChannels {
