@@ -184,6 +184,15 @@ func main() {
 	}
 	// Load global vars on program start.
 	for _, v := range channels {
+		for i, qt := range v.Quotes {
+			nq := strings.TrimSuffix(qt, "- 0001-01-01 00:00:00 +0000 UTC)")
+			nq = nq+")"
+			v.Quotes[i] = nq
+		}
+		if err := db.DB.Update(&v); err != nil {
+			log.Println("fixing Quotes db.Update() error", err.Error())
+			return
+		}
 		allChannels = append(allChannels, v.Name)
 	}
 	writeChannels()  // write list of channels, for my personal use
@@ -252,21 +261,16 @@ func main() {
 			for _, v := range offlineChannels {
 				ircClient.Depart(v)
 				log.Println("departed", v)
-				log.Println("checking channel", v)
+				// log.Println("checking channel", v)
 				if _, exist := channelOffline[v]; exist {
-					log.Println("channel exists, attempting to close", v)
+					// log.Println("channel exists, attempting to close", v)
 					if _, ok := <-channelOffline[v]; ok {
-						log.Println("closing channel", v)
+						// log.Println("closing channel", v)
 						close(channelOffline[v])
-						log.Println("close sent to channel", v)
+						delete(channelOffline, v)
+						// log.Println("close sent to channel", v)
 					}
-				} else {
-					log.Println("channel does not exist, moving on from", v)
 				}
-
-				// if channelOffline[v] == nil {
-				// 	channelOffline[v] <- true
-				// }
 			}
 			// Run every 5 minutes
 			time.Sleep(time.Minute * 5)

@@ -34,12 +34,11 @@ func commandQuote(channel string, chUser *twitch.User, args ...string) {
 		}
 
 		name := args[0]
-		t := time.Now()
-		ts, _ := time.Parse("Jan 2 2006", t.String())
+		t := time.Now().Format("Jan 2 2006")
 
 		// Only the message should be left at this point.
 		message := strings.Join(args[1:], " ")
-		message = message + " (" + name + " - " + ts.String() + ")"
+		message = message + " (" + name + " - " + t + ")"
 		ch.Quotes = append(ch.Quotes, message)
 		num := len(ch.Quotes)
 
