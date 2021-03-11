@@ -247,9 +247,12 @@ func main() {
 			for _, v := range offlineChannels {
 				ircClient.Depart(v)
 				log.Println("departed", v)
-				if channelOffline[v] == nil {
+				if _, ok := <-channelOffline[v]; ok {
 					channelOffline[v] <- true
 				}
+				// if channelOffline[v] == nil {
+				// 	channelOffline[v] <- true
+				// }
 			}
 			// Run every 5 minutes
 			time.Sleep(time.Minute * 5)
@@ -487,6 +490,7 @@ func run(channel string)  {
 					break
 				}
 			default:
+				time.Sleep(time.Minute * time.Duration(73))
 				if len(c.Updates) > 0 {
 					say(channel, "@"+channel+" "+c.Updates[0])
 					_, c.Updates = c.Updates[0], c.Updates[1:]
@@ -495,7 +499,7 @@ func run(channel string)  {
 					}
 				}
 			}
-			time.Sleep(time.Minute * time.Duration(73))
+
 		}
 	}()
 
@@ -507,13 +511,14 @@ func run(channel string)  {
 					break
 				}
 			default:
+				time.Sleep(time.Minute * time.Duration(60))
 				// Display quotes if there are 11+.
 				if len(c.Quotes) > 10 {
 					r := random(0, len(c.Quotes))
 					say(c.Name, c.Quotes[r])
 				}
 			}
-			time.Sleep(time.Minute * time.Duration(60))
+
 		}
 	}()
 }
