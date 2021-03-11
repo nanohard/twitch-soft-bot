@@ -104,7 +104,7 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 		// Set channel vars to avoid map lookup error.
 		incomingChatTime[channel] = time.Time{}
 		randomChatTime[channel] = time.Time{}
-		channelOffline[channel] = nil
+		channelOffline[channel] = make(chan struct{})
 		say(channel, "The OG Soft Boy will be in your channel in 5 minutes homie. Welcome to the hug gang.")
 
 		// Write channels to txt file.
@@ -113,7 +113,7 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 		if !broadcaster(chUser) {
 			return
 		}
-		channelOffline[channel] <- true
+		close(channelOffline[channel])
 		ircClient.Depart(channel)
 		if err := db.DB.DeleteStruct(models.Channel{Name: chUser.Name}); err != nil {
 			log.Println(channel, "softboy leave: db.DeleteStruct()", err)

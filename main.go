@@ -231,8 +231,7 @@ func main() {
 				}
 				// Channel is live, join it and run processes.
 				if len(stream.Data.Streams) > 0 {
-					offline := make(chan struct{})
-					channelOffline[name] = offline
+					channelOffline[name] = make(chan struct{})
 					done.Add(1)
 
 					ircClient.Join(name)
