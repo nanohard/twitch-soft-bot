@@ -255,11 +255,14 @@ func main() {
 				log.Println("departed", v)
 				log.Println("checking channel", v)
 				if _, exist := channelOffline[v]; exist {
+					log.Println("channel exists, attempting to close", v)
 					if _, ok := <-channelOffline[v]; ok {
 						log.Println("closing channel", v)
 						close(channelOffline[v])
 						log.Println("close sent to channel", v)
 					}
+				} else {
+					log.Println("channel does not exist, moving on from", v)
 				}
 
 				// if channelOffline[v] == nil {
