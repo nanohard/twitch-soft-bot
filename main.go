@@ -246,6 +246,7 @@ func main() {
 			// Depart offline channels and stop processes from run().
 			for _, v := range offlineChannels {
 				ircClient.Depart(v)
+				log.Println("departed", v)
 				channelOffline[v] <- true
 			}
 			// Run every 5 minutes
