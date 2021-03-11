@@ -254,6 +254,9 @@ func main() {
 				ircClient.Depart(v)
 				log.Println("departed", v)
 				log.Println("checking channel", v)
+				if _, ok := channelOffline[v]; !ok {
+					continue
+				}
 				if _, ok := <-channelOffline[v]; ok {
 					log.Println("closing channel", v)
 					close(channelOffline[v])
