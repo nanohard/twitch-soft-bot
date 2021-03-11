@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -30,9 +31,12 @@ var (
 	mainChannel = os.Getenv("TWITCH_CHANNEL")
 
 	// Concerning the bot itself.
+	channelOffline = make(map[string]chan struct{})
+	done           sync.WaitGroup
+
 	channelMod = make(map[string]bool)
-	channelOffline = make(map[string]chan bool)
 	allChannels []string
+
 	// channelModTime = make(map[string]time.Time)
 	// wantModMessages = []string{
 	// 	"A responsible streamer would mod me",
@@ -227,7 +231,10 @@ func main() {
 				}
 				// Channel is live, join it and run processes.
 				if len(stream.Data.Streams) > 0 {
-					channelOffline[name] = nil
+					offline := make(chan struct{})
+					channelOffline[name] = offline
+					done.Add(1)
+
 					ircClient.Join(name)
 					run(name)
 					log.Println("joined", name)
@@ -247,11 +254,11 @@ func main() {
 			for _, v := range offlineChannels {
 				ircClient.Depart(v)
 				log.Println("departed", v)
-				log.Println("checking channel")
+				log.Println("checking channel", v)
 				if _, ok := channelOffline[v]; ok {
-					log.Println("channel ok")
-					channelOffline[v] <- true
-					log.Println("sent to channel")
+					log.Println("closing channel", v)
+					close(channelOffline[v])
+					log.Println("close sent to channel", v)
 				}
 				// if channelOffline[v] == nil {
 				// 	channelOffline[v] <- true
@@ -488,10 +495,8 @@ func run(channel string)  {
 	go func() {
 		for {
 			select {
-			case offline := <- channelOffline[channel]:
-				if offline {
-					break
-				}
+			case <-channelOffline[channel]:
+				break
 			default:
 				time.Sleep(time.Minute * time.Duration(73))
 				if len(c.Updates) > 0 {
@@ -502,17 +507,15 @@ func run(channel string)  {
 					}
 				}
 			}
-
+			done.Done()
 		}
 	}()
 
 	go func() {
 		for {
 			select {
-			case offline := <-channelOffline[channel]:
-				if offline {
-					break
-				}
+			case <-channelOffline[channel]:
+				break
 			default:
 				time.Sleep(time.Minute * time.Duration(60))
 				// Display quotes if there are 11+.
@@ -521,7 +524,7 @@ func run(channel string)  {
 					say(c.Name, c.Quotes[r])
 				}
 			}
-
+			done.Done()
 		}
 	}()
 }
