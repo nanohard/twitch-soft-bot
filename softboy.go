@@ -38,8 +38,10 @@ var (
 func init() {
 	// Read in JSON files on init and every hour.
 	go func() {
-		read()
-		time.Sleep(time.Hour * time.Duration(1))
+		for {
+			read()
+			time.Sleep(time.Hour * time.Duration(1))
+		}
 	}()
 }
 
