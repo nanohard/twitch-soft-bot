@@ -253,9 +253,9 @@ func main() {
 				// This will allow us up to 600 channels per minute
 				time.Sleep(time.Millisecond * 100)
 			}
+			log.Println(len(offlineChannels), "are offline")
 			// Depart offline channels and stop processes from run().
 			for _, v := range offlineChannels {
-				log.Println("channel is offline", v)
 				if _, exist := channelOffline[v]; exist {
 					log.Println("departing offline channel", v)
 					ircClient.Depart(v)
