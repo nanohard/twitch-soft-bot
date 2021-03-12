@@ -238,6 +238,7 @@ func main() {
 							log.Println("removed channel from offline list", name)
 						}
 					}
+					log.Println("length of offlineChannels is", len(offlineChannels))
 					// Disregard if we already know the channel is live.
 					if _, exist := channelOffline[name]; exist {
 						log.Println("channel is already live, skipping")
