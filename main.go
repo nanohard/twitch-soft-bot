@@ -230,8 +230,16 @@ func main() {
 				}
 				// Channel is live, join it and run processes.
 				if len(stream.Data.Streams) > 0 {
+					// Remove channel from list of offline channels.
+					for i, v := range offlineChannels {
+						if name == v {
+							offlineChannels = remove(offlineChannels, i)
+							break
+						}
+					}
 					// Disregard if we already know the channel is live.
 					if _, exist := channelOffline[name]; exist {
+						log.Println("channel is already live, skipping")
 						continue
 					}
 
@@ -241,13 +249,6 @@ func main() {
 					ircClient.Join(name)
 					run(name)
 					log.Println("joined", name)
-
-					// remove channel from var.
-					for i, v := range offlineChannels {
-						if name == v {
-							offlineChannels = remove(offlineChannels, i)
-						}
-					}
 				}
 				// Twitch allows 800 requests per minute.
 				// This will allow us up to 600 channels per minute
@@ -255,12 +256,16 @@ func main() {
 			}
 			// Depart offline channels and stop processes from run().
 			for _, v := range offlineChannels {
+				log.Println("channel is offline", v)
 				if _, exist := channelOffline[v]; exist {
+					log.Println("departing offline channel", v)
 					ircClient.Depart(v)
 					log.Println("departed", v)
 					if _, ok := <-channelOffline[v]; ok {
+						log.Println("closing processes for offline channel", v)
 						close(channelOffline[v])
 						delete(channelOffline, v)
+						log.Println("processes closed for offline channel", v)
 					}
 				}
 			}
