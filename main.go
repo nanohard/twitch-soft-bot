@@ -234,7 +234,6 @@ func main() {
 					for i, v := range offlineChannels {
 						if name == v {
 							offlineChannels = remove(offlineChannels, i)
-							break
 						}
 					}
 					// Disregard if we already know the channel is live.
@@ -498,11 +497,12 @@ func run(channel string)  {
 	}
 
 	go func() {
+		run:
 		for {
 			select {
 			case <-channelOffline[channel]:
 				done.Done()
-				break
+				break run
 			default:
 				time.Sleep(time.Minute * time.Duration(73))
 				if len(c.Updates) > 0 {
@@ -517,11 +517,12 @@ func run(channel string)  {
 	}()
 
 	go func() {
+		run:
 		for {
 			select {
 			case <-channelOffline[channel]:
 				done.Done()
-				break
+				break run
 			default:
 				time.Sleep(time.Minute * time.Duration(60))
 				// Display quotes if there are 11+.
