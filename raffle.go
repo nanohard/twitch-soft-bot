@@ -328,7 +328,7 @@ func commandMyRaffles(channel string, chUser *twitch.User) {
 
 	var raffleList string
 	for k, v := range user.Raffles {
-		raffleList += k + ":" + strconv.Itoa(v)
+		raffleList += k + ":" + strconv.Itoa(v) + " "
 	}
 
 	say(channel, "@"+chUser.DisplayName+" "+raffleList)
