@@ -218,7 +218,7 @@ func main() {
 		for {
 			// Comapare live channels to all channels and depart offline channels
 			offlineChannels := allChannels
-			for _, name := range offlineChannels {
+			for i, name := range offlineChannels {
 				stream, err := helixClient.GetStreams(&helix.StreamsParams{
 					First:      0,
 					Type:       "",
@@ -232,12 +232,12 @@ func main() {
 				if len(stream.Data.Streams) > 0 {
 					log.Println("channel is live, removing from offline list", name)
 					// Remove channel from list of offline channels.
-					for i, v := range offlineChannels {
-						if name == v {
+					// for i, v := range offlineChannels {
+					// 	if name == v {
 							offlineChannels = remove(offlineChannels, i)
 							log.Println("removed channel from offline list", name)
-						}
-					}
+						// }
+					// }
 					log.Println("length of offlineChannels is", len(offlineChannels))
 					// Disregard if we already know the channel is live.
 					if _, exist := channelOffline[name]; exist {
