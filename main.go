@@ -230,10 +230,12 @@ func main() {
 				}
 				// Channel is live, join it and run processes.
 				if len(stream.Data.Streams) > 0 {
+					log.Println("channel is live, removing from offline list", name)
 					// Remove channel from list of offline channels.
 					for i, v := range offlineChannels {
 						if name == v {
 							offlineChannels = remove(offlineChannels, i)
+							log.Println("removed channel from offline list", name)
 						}
 					}
 					// Disregard if we already know the channel is live.
