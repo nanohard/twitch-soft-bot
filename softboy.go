@@ -102,11 +102,10 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 			return
 		}
 		// add channel to global var
-		allChannels = append(allChannels, chUser.Name)
+		allChannels = append(allChannels, channel)
 		// Set channel vars to avoid map lookup error.
 		incomingChatTime[channel] = time.Time{}
 		randomChatTime[channel] = time.Time{}
-		channelOffline[channel] = make(chan struct{})
 		say(channel, "The OG Soft Boy will be in your channel in 5 minutes homie. Welcome to the hug gang.")
 
 		// Write channels to txt file.
@@ -115,8 +114,17 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 		if !broadcaster(chUser) {
 			return
 		}
-		close(channelOffline[channel])
-		ircClient.Depart(channel)
+		if _, exist := channelOffline[channel]; exist {
+			log.Println("departing offline channel", channel)
+			ircClient.Depart(channel)
+			log.Println("departed", channel)
+			if _, ok := <-channelOffline[channel]; ok {
+				log.Println("closing processes for offline channel", channel)
+				close(channelOffline[channel])
+				delete(channelOffline, channel)
+				log.Println("processes closed for offline channel", channel)
+			}
+		}
 		if err := db.DB.DeleteStruct(models.Channel{Name: chUser.Name}); err != nil {
 			log.Println(channel, "softboy leave: db.DeleteStruct()", err)
 			say(channel, "@"+chUser.DisplayName+" Error "+err.Error())
@@ -133,7 +141,6 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 		// delete time tables associated w/ channel
 		delete(incomingChatTime, channel)
 		delete(randomChatTime, channel)
-		delete(channelOffline, channel)
 		say(channel, "You're too hard to be a Soft Boy. Open-mouth kisses. I'm out.")
 		writeChannels()
 	}
