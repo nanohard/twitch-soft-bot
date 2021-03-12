@@ -230,6 +230,11 @@ func main() {
 				}
 				// Channel is live, join it and run processes.
 				if len(stream.Data.Streams) > 0 {
+					// Disregard if we already know the channel is live.
+					if _, exist := channelOffline[name]; exist {
+						continue
+					}
+
 					channelOffline[name] = make(chan struct{})
 					done.Add(1)
 
