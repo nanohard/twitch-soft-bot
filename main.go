@@ -218,7 +218,7 @@ func main() {
 		for {
 			// Comapare live channels to all channels and depart offline channels
 			offlineChannels := allChannels
-			for i, name := range offlineChannels {
+			for i, name := range allChannels {
 				stream, err := helixClient.GetStreams(&helix.StreamsParams{
 					First:      0,
 					Type:       "",
@@ -251,26 +251,24 @@ func main() {
 					ircClient.Join(name)
 					run(name)
 					log.Println("joined", name)
+
+				} else if _, exist := channelOffline[name]; exist {
+					// Depart offline channels and stop processes from run().
+					log.Println("departing offline channel", name)
+					ircClient.Depart(name)
+					log.Println("departed", name)
+					if _, ok := <-channelOffline[name]; ok {
+						log.Println("closing processes for offline channel", name)
+						close(channelOffline[name])
+						delete(channelOffline, name)
+						log.Println("processes closed for offline channel", name)
+					}
 				}
 				// Twitch allows 800 requests per minute.
 				// This will allow us up to 600 channels per minute
 				time.Sleep(time.Millisecond * 100)
 			}
 			log.Println(len(offlineChannels), "are offline")
-			// Depart offline channels and stop processes from run().
-			for _, v := range offlineChannels {
-				if _, exist := channelOffline[v]; exist {
-					log.Println("departing offline channel", v)
-					ircClient.Depart(v)
-					log.Println("departed", v)
-					if _, ok := <-channelOffline[v]; ok {
-						log.Println("closing processes for offline channel", v)
-						close(channelOffline[v])
-						delete(channelOffline, v)
-						log.Println("processes closed for offline channel", v)
-					}
-				}
-			}
 			// Run every 5 minutes
 			time.Sleep(time.Minute * 5)
 		}
