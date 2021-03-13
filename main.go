@@ -219,20 +219,21 @@ func main() {
 			// Comapare live channels to all channels and depart offline channels
 			offlineChannels := allChannels
 			for i:=0; i<len(offlineChannels); i++ {
+				name := offlineChannels[i]
 			// for i, name := range offlineChannels {
-				log.Println(i, offlineChannels[i])
+				log.Println(i, name)
 				stream, err := helixClient.GetStreams(&helix.StreamsParams{
 					First:      0,
 					Type:       "",
 					UserIDs:    nil,
-					UserLogins: []string{offlineChannels[i]},
+					UserLogins: []string{name},
 				})
 				if err != nil {
 					log.Println("get stream status error", err)
 				}
 				// Channel is live, join it and run processes.
 				if len(stream.Data.Streams) > 0 {
-					log.Println("channel is live, removing from offline list", offlineChannels[i])
+					log.Println("channel is live, removing from offline list", name)
 					// Remove channel from list of offline channels.
 					// for i, v := range offlineChannels {
 					// 	if name == v {
@@ -240,33 +241,34 @@ func main() {
 					// offlineChannels[len(offlineChannels)-1] = "" // or the zero value of T
 					// offlineChannels = offlineChannels[:len(offlineChannels)-1]
 							offlineChannels = append(offlineChannels[:i], offlineChannels[i+1:]...)
-							log.Println("removed channel from offline list", offlineChannels[i])
+							i--
+							log.Println("removed channel from offline list", name)
 						// }
 					// }
 					log.Println("length of offlineChannels is", len(offlineChannels))
 					// Disregard if we already know the channel is live.
-					if _, exist := channelOffline[offlineChannels[i]]; exist {
+					if _, exist := channelOffline[name]; exist {
 						log.Println("channel is already live, skipping")
 						continue
 					}
 
-					channelOffline[offlineChannels[i]] = make(chan struct{})
+					channelOffline[name] = make(chan struct{})
 					done.Add(1)
 
-					ircClient.Join(offlineChannels[i])
-					run(offlineChannels[i])
-					log.Println("joined", offlineChannels[i])
+					ircClient.Join(name)
+					run(name)
+					log.Println("joined", name)
 
-				} else if _, exist := channelOffline[offlineChannels[i]]; exist {
+				} else if _, exist := channelOffline[name]; exist {
 					// Depart offline channels and stop processes from run().
-					log.Println("departing offline channel", offlineChannels[i])
-					ircClient.Depart(offlineChannels[i])
-					log.Println("departed", offlineChannels[i])
-					if _, ok := <-channelOffline[offlineChannels[i]]; ok {
-						log.Println("closing processes for offline channel", offlineChannels[i])
-						close(channelOffline[offlineChannels[i]])
-						delete(channelOffline, offlineChannels[i])
-						log.Println("processes closed for offline channel", offlineChannels[i])
+					log.Println("departing offline channel", name)
+					ircClient.Depart(name)
+					log.Println("departed", name)
+					if _, ok := <-channelOffline[name]; ok {
+						log.Println("closing processes for offline channel", name)
+						close(channelOffline[name])
+						delete(channelOffline, name)
+						log.Println("processes closed for offline channel", name)
 					}
 				}
 				// Twitch allows 800 requests per minute.
