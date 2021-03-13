@@ -235,7 +235,10 @@ func main() {
 					// Remove channel from list of offline channels.
 					// for i, v := range offlineChannels {
 					// 	if name == v {
-							offlineChannels = append(offlineChannels[:i], offlineChannels[i+1:]...)
+					copy(offlineChannels[i:], offlineChannels[i+1:])
+					offlineChannels[len(offlineChannels)-1] = "" // or the zero value of T
+					offlineChannels = offlineChannels[:len(offlineChannels)-1]
+							// offlineChannels = append(offlineChannels[:i], offlineChannels[i+1:]...)
 							log.Println("removed channel from offline list", name)
 						// }
 					// }
