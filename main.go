@@ -246,12 +246,12 @@ func main() {
 					log.Println("departing offline channel", name)
 					ircClient.Depart(name)
 					log.Println("departed", name)
-					if _, ok := <-endChannel[name]; ok {
+					// if _, ok := <-endChannel[name]; ok {
 						log.Println("closing processes for offline channel", name)
 						close(endChannel[name])
 						delete(endChannel, name)
 						log.Println("processes closed for offline channel", name)
-					}
+					// }
 				}
 				// Twitch allows 800 requests per minute.
 				// This will allow us up to 600 channels per minute
