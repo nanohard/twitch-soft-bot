@@ -218,7 +218,7 @@ func main() {
 		for {
 			// Comapare live channels to all channels and depart offline channels
 			offlineChannels := allChannels
-			for i, name := range allChannels {
+			for i, name := range offlineChannels {
 				stream, err := helixClient.GetStreams(&helix.StreamsParams{
 					First:      0,
 					Type:       "",
