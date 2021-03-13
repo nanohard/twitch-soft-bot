@@ -271,7 +271,7 @@ func main() {
 			}
 			log.Println(len(offlineChannels), "are offline")
 			// Run every 5 minutes
-			time.Sleep(time.Minute * 5)
+			time.Sleep(time.Minute * 1)
 		}
 	}()
 
