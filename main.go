@@ -31,8 +31,8 @@ var (
 	mainChannel = os.Getenv("TWITCH_CHANNEL")
 
 	// Concerning the bot itself.
-	channelOffline = make(map[string]chan struct{})
-	done           sync.WaitGroup
+	endChannel = make(map[string]chan struct{})
+	done       sync.WaitGroup
 
 	channelMod = make(map[string]bool)
 	allChannels []string
@@ -216,10 +216,8 @@ func main() {
 	// Get stream status (online/offline)
 	go func() {
 		for {
-			// Comapare live channels to all channels and depart offline channels
-			offlineChannels := &allChannels
-			for i:=0; i<len(*offlineChannels); i++ {
-				name := (*offlineChannels)[i]
+			// Compare live channels to all channels and depart offline channels
+			for i, name := range allChannels {
 			// for i, name := range offlineChannels {
 				log.Println(i, name)
 				stream, err := helixClient.GetStreams(&helix.StreamsParams{
@@ -233,41 +231,42 @@ func main() {
 				}
 				// Channel is live, join it and run processes.
 				if len(stream.Data.Streams) > 0 {
-					log.Println("channel is live, removing from offline list", name)
+					log.Println("channel is live", name)
 					// Remove channel from list of offline channels.
 					// for i, v := range offlineChannels {
 					// 	if name == v {
-					copy((*offlineChannels)[i:], (*offlineChannels)[i+1:])
-					(*offlineChannels)[len(*offlineChannels)-1] = "" // or the zero value of T
-					*offlineChannels = (*offlineChannels)[:len(*offlineChannels)-1]
+					// copy(offlineChannels[i:], offlineChannels[i+1:])
+					// offlineChannels[len(offlineChannels)-1] = "" // or the zero value of T
+					// offlineChannels = offlineChannels[:len(offlineChannels)-1]
 					// 		offlineChannels = append(offlineChannels[:i], offlineChannels[i+1:]...)
-							i--
-							log.Println("removed channel from offline list", name)
+					// 		i--
+
+							// log.Println("removed channel from offline list", name)
 						// }
 					// }
-					log.Println("length of offlineChannels is", len(*offlineChannels))
+					// log.Println("length of offlineChannels is", len(offlineChannels))
 					// Disregard if we already know the channel is live.
-					if _, exist := channelOffline[name]; exist {
+					if _, exist := endChannel[name]; exist {
 						log.Println("channel is already live, skipping")
 						continue
 					}
 
-					channelOffline[name] = make(chan struct{})
+					endChannel[name] = make(chan struct{})
 					done.Add(1)
 
 					ircClient.Join(name)
 					run(name)
 					log.Println("joined", name)
 
-				} else if _, exist := channelOffline[name]; exist {
+				} else if _, exist := endChannel[name]; exist {
 					// Depart offline channels and stop processes from run().
 					log.Println("departing offline channel", name)
 					ircClient.Depart(name)
 					log.Println("departed", name)
-					if _, ok := <-channelOffline[name]; ok {
+					if _, ok := <-endChannel[name]; ok {
 						log.Println("closing processes for offline channel", name)
-						close(channelOffline[name])
-						delete(channelOffline, name)
+						close(endChannel[name])
+						delete(endChannel, name)
 						log.Println("processes closed for offline channel", name)
 					}
 				}
@@ -275,7 +274,7 @@ func main() {
 				// This will allow us up to 600 channels per minute
 				time.Sleep(time.Millisecond * 100)
 			}
-			log.Println(len(*offlineChannels), "are offline")
+			// log.Println(len(offlineChannels), "are offline")
 			// Run every 5 minutes
 			time.Sleep(time.Minute * 1)
 		}
@@ -508,7 +507,7 @@ func run(channel string)  {
 		run:
 		for {
 			select {
-			case <-channelOffline[channel]:
+			case <-endChannel[channel]:
 				done.Done()
 				break run
 			default:
@@ -528,7 +527,7 @@ func run(channel string)  {
 		run:
 		for {
 			select {
-			case <-channelOffline[channel]:
+			case <-endChannel[channel]:
 				done.Done()
 				break run
 			default:

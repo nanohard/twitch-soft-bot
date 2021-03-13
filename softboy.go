@@ -114,14 +114,14 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 		if !broadcaster(chUser) {
 			return
 		}
-		if _, exist := channelOffline[channel]; exist {
+		if _, exist := endChannel[channel]; exist {
 			log.Println("departing offline channel", channel)
 			ircClient.Depart(channel)
 			log.Println("departed", channel)
-			if _, ok := <-channelOffline[channel]; ok {
+			if _, ok := <-endChannel[channel]; ok {
 				log.Println("closing processes for offline channel", channel)
-				close(channelOffline[channel])
-				delete(channelOffline, channel)
+				close(endChannel[channel])
+				delete(endChannel, channel)
 				log.Println("processes closed for offline channel", channel)
 			}
 		}
