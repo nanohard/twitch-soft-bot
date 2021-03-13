@@ -217,9 +217,7 @@ func main() {
 	go func() {
 		for {
 			// Compare live channels to all channels and depart offline channels
-			for i, name := range allChannels {
-			// for i, name := range offlineChannels {
-				log.Println(i, name)
+			for _, name := range allChannels {
 				stream, err := helixClient.GetStreams(&helix.StreamsParams{
 					First:      0,
 					Type:       "",
@@ -231,23 +229,8 @@ func main() {
 				}
 				// Channel is live, join it and run processes.
 				if len(stream.Data.Streams) > 0 {
-					log.Println("channel is live", name)
-					// Remove channel from list of offline channels.
-					// for i, v := range offlineChannels {
-					// 	if name == v {
-					// copy(offlineChannels[i:], offlineChannels[i+1:])
-					// offlineChannels[len(offlineChannels)-1] = "" // or the zero value of T
-					// offlineChannels = offlineChannels[:len(offlineChannels)-1]
-					// 		offlineChannels = append(offlineChannels[:i], offlineChannels[i+1:]...)
-					// 		i--
-
-							// log.Println("removed channel from offline list", name)
-						// }
-					// }
-					// log.Println("length of offlineChannels is", len(offlineChannels))
 					// Disregard if we already know the channel is live.
 					if _, exist := endChannel[name]; exist {
-						log.Println("channel is already live, skipping")
 						continue
 					}
 
@@ -274,9 +257,8 @@ func main() {
 				// This will allow us up to 600 channels per minute
 				time.Sleep(time.Millisecond * 100)
 			}
-			// log.Println(len(offlineChannels), "are offline")
 			// Run every 5 minutes
-			time.Sleep(time.Minute * 1)
+			time.Sleep(time.Minute * 5)
 		}
 	}()
 
