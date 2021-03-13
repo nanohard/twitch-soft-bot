@@ -31,8 +31,8 @@ var (
 	mainChannel = os.Getenv("TWITCH_CHANNEL")
 
 	// Concerning the bot itself.
-	channelOffline = make(map[string]chan struct{})
-	done           sync.WaitGroup
+	endChannel = make(map[string]chan struct{})
+	done       sync.WaitGroup
 
 	channelMod = make(map[string]bool)
 	allChannels []string
@@ -216,9 +216,10 @@ func main() {
 	// Get stream status (online/offline)
 	go func() {
 		for {
-			// Comapare live channels to all channels and depart offline channels
-			offlineChannels := allChannels
-			for _, name := range allChannels {
+			// Compare live channels to all channels and depart offline channels
+			for i, name := range allChannels {
+			// for i, name := range offlineChannels {
+				log.Println(i, name)
 				stream, err := helixClient.GetStreams(&helix.StreamsParams{
 					First:      0,
 					Type:       "",
@@ -230,47 +231,52 @@ func main() {
 				}
 				// Channel is live, join it and run processes.
 				if len(stream.Data.Streams) > 0 {
+					log.Println("channel is live", name)
 					// Remove channel from list of offline channels.
-					for i, v := range offlineChannels {
-						if name == v {
-							offlineChannels = remove(offlineChannels, i)
-							break
-						}
-					}
+					// for i, v := range offlineChannels {
+					// 	if name == v {
+					// copy(offlineChannels[i:], offlineChannels[i+1:])
+					// offlineChannels[len(offlineChannels)-1] = "" // or the zero value of T
+					// offlineChannels = offlineChannels[:len(offlineChannels)-1]
+					// 		offlineChannels = append(offlineChannels[:i], offlineChannels[i+1:]...)
+					// 		i--
+
+							// log.Println("removed channel from offline list", name)
+						// }
+					// }
+					// log.Println("length of offlineChannels is", len(offlineChannels))
 					// Disregard if we already know the channel is live.
-					if _, exist := channelOffline[name]; exist {
+					if _, exist := endChannel[name]; exist {
 						log.Println("channel is already live, skipping")
 						continue
 					}
 
-					channelOffline[name] = make(chan struct{})
+					endChannel[name] = make(chan struct{})
 					done.Add(1)
 
 					ircClient.Join(name)
 					run(name)
 					log.Println("joined", name)
+
+				} else if _, exist := endChannel[name]; exist {
+					// Depart offline channels and stop processes from run().
+					log.Println("departing offline channel", name)
+					ircClient.Depart(name)
+					log.Println("departed", name)
+					if _, ok := <-endChannel[name]; ok {
+						log.Println("closing processes for offline channel", name)
+						close(endChannel[name])
+						delete(endChannel, name)
+						log.Println("processes closed for offline channel", name)
+					}
 				}
 				// Twitch allows 800 requests per minute.
 				// This will allow us up to 600 channels per minute
 				time.Sleep(time.Millisecond * 100)
 			}
-			// Depart offline channels and stop processes from run().
-			for _, v := range offlineChannels {
-				log.Println("channel is offline", v)
-				if _, exist := channelOffline[v]; exist {
-					log.Println("departing offline channel", v)
-					ircClient.Depart(v)
-					log.Println("departed", v)
-					if _, ok := <-channelOffline[v]; ok {
-						log.Println("closing processes for offline channel", v)
-						close(channelOffline[v])
-						delete(channelOffline, v)
-						log.Println("processes closed for offline channel", v)
-					}
-				}
-			}
+			// log.Println(len(offlineChannels), "are offline")
 			// Run every 5 minutes
-			time.Sleep(time.Minute * 5)
+			time.Sleep(time.Minute * 1)
 		}
 	}()
 
@@ -498,11 +504,12 @@ func run(channel string)  {
 	}
 
 	go func() {
+		run:
 		for {
 			select {
-			case <-channelOffline[channel]:
+			case <-endChannel[channel]:
 				done.Done()
-				break
+				break run
 			default:
 				time.Sleep(time.Minute * time.Duration(73))
 				if len(c.Updates) > 0 {
@@ -517,11 +524,12 @@ func run(channel string)  {
 	}()
 
 	go func() {
+		run:
 		for {
 			select {
-			case <-channelOffline[channel]:
+			case <-endChannel[channel]:
 				done.Done()
-				break
+				break run
 			default:
 				time.Sleep(time.Minute * time.Duration(60))
 				// Display quotes if there are 11+.
