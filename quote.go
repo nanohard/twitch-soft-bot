@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -34,7 +35,15 @@ func commandQuote(channel string, chUser *twitch.User, args ...string) {
 		}
 
 		name := args[0]
-		t := time.Now().Format("Jan 2 2006")
+
+		// Generate random time.
+		min := time.Date(2000, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
+		max := time.Now().UTC().Unix()
+		delta := max - min
+		sec := rand.Int63n(delta) + min
+
+		t := time.Unix(sec, 0).Format("Jan 2 2006")
+		// t := time.Now().Format("Jan 2 2006")
 
 		// Only the message should be left at this point.
 		message := strings.Join(args[1:], " ")
