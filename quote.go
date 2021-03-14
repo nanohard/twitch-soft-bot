@@ -32,6 +32,12 @@ func commandQuote(channel string, chUser *twitch.User, args ...string) {
 		return
 	}
 
+	number, err := strconv.Atoi(args[0])
+
+	log.Println(err)
+	log.Println(number)
+	log.Println(length)
+
 	// If user trying to print 1 quote
 	if number, err := strconv.Atoi(args[0]); err == nil && length == 1 && number <= length {
 		say(channel, ch.Quotes[number-1])
