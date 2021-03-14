@@ -25,21 +25,21 @@ func commandQuote(channel string, chUser *twitch.User, args ...string) {
 		return
 	}
 
+	var ch models.Channel
+	if err := db.DB.One("Name", channel, &ch); err != nil {
+		log.Println(channel + " quote db.Get channel " + err.Error())
+		say(channel, "Error "+err.Error())
+		return
+	}
+
+	// If user trying to print 1 quote
+	if number, err := strconv.Atoi(args[0]); err == nil && length == 1 && number <= length {
+		say(channel, ch.Quotes[number-1])
+		return
+	}
+
 	// !quote name[0] [message]
 	if length > 1 {
-		var ch models.Channel
-		if err := db.DB.One("Name", channel, &ch); err != nil {
-			log.Println(channel + " quote db.Get channel " + err.Error())
-			say(channel, "Error " + err.Error())
-			return
-		}
-
-		// If user trying to print 1 quote
-		if number, err := strconv.Atoi(args[0]); err == nil && length == 1 {
-			say(channel, ch.Quotes[number-1])
-			return
-		}
-
 		name := args[0]
 
 		// Generate random time.
