@@ -39,6 +39,8 @@ var (
 
 	counters = make(map[int]time.Time)
 
+	lurkList = make(map[string]string)  // [name]channel
+
 	// channelModTime = make(map[string]time.Time)
 	// wantModMessages = []string{
 	// 	"A responsible streamer would mod me",
@@ -133,6 +135,7 @@ func createUser(channel string, displayName string) {
 
 func commandLurk(channel string, chUser *twitch.User) {
 	say(channel, chUser.DisplayName + " is putting in the real homie love with a lurk")
+	lurkList[chUser.DisplayName] = channel
 }
 
 
@@ -171,6 +174,12 @@ func main() {
 			passCommand(message.Channel, &message.User, command, args...)
 		} else {
 			botBan(message.Channel, message.Message, &message.User)
+			if v, ok := lurkList[message.User.DisplayName]; ok {
+				if v == message.Channel {
+					say(message.Channel, lurkReturn(message.User.DisplayName))
+					delete(lurkList, message.User.DisplayName)
+				}
+			}
 			chat(message.Channel, message.Message, &message.User)
 		}
 	})
