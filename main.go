@@ -37,6 +37,8 @@ var (
 	channelMod = make(map[string]bool)
 	allChannels []string
 
+	counters = make(map[int]time.Time)
+
 	// channelModTime = make(map[string]time.Time)
 	// wantModMessages = []string{
 	// 	"A responsible streamer would mod me",
@@ -48,8 +50,6 @@ var (
 	// 	"You're holding up other people from using me. And you're a dumb-dumb face",
 	// 	"If I'm a mod I can auto-ban the bots that want you to buy follows",
 	// }
-
-	counters = make(map[int]time.Time)
 )
 
 
@@ -245,10 +245,8 @@ func main() {
 					// Depart offline channels and stop processes from run().
 					ircClient.Depart(name)
 					log.Println("departed", name)
-					// if _, ok := <-endChannel[name]; ok {
-						close(endChannel[name])
-						delete(endChannel, name)
-					// }
+					close(endChannel[name])
+					delete(endChannel, name)
 				}
 				// Twitch allows 800 requests per minute.
 				// This will allow us up to 600 channels per minute
