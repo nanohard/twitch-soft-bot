@@ -4,7 +4,6 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
@@ -195,22 +194,6 @@ func main() {
 	// Load global vars on program start.
 	for _, v := range channels {
 		allChannels = append(allChannels, v.Name)
-		for i:=0; i<len(v.Quotes); i++ {
-			nq := strings.TrimSuffix(v.Quotes[i], " )")
-
-			min := time.Date(2000, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
-			max := time.Now().UTC().Unix()
-			delta := max - min
-			sec := rand.Int63n(delta) + min
-			t := time.Unix(sec, 0).Format("Jan 2 2006")
-
-			nq = nq + " - " + t + ")"
-			v.Quotes[i] = nq
-		}
-		if err := db.DB.Update(&models.Channel{ID: v.ID, Quotes: v.Quotes}); err != nil {
-			log.Println("fixing Quotes db.Update() error", err.Error())
-			return
-		}
 	}
 	writeChannels()  // write list of channels, for my personal use
 
