@@ -230,13 +230,15 @@ func writeChannels() {
 
 func lurkReturn(user string) string {
 	var s string
-	switch random(0, 3) {
+	switch random(0, 4) {
 	case 0:
 		s = user + " is back like they never left!"
 	case 1:
 		s = user + " is back. Congratulate them on a successful fap!"
 	case 2:
-		s = "My clap session with " + user + " is over. Yeah, I clapped " + user + ". No big deal."
+		s = "I'm done with " + user + ". You can have back what's left of them."
+	case 3:
+		s = user + " is all sweaty from their lurk. Nice"
 	}
 	return s
 }
