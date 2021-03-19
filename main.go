@@ -152,16 +152,14 @@ func main() {
 	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
 
-	// Check if bot is modded.
+	// Check if bot is modded
+	// for botBan()
 	ircClient.OnUserStateMessage(func(message twitch.UserStateMessage) {
-		// If bot is present
-		if message.User.Name == "og_softbot" {
-			// If bot is not mod
-			if _, ok := message.User.Badges["moderator"]; ok {
-				channelMod[message.Channel] = true
-			} else {
-				channelMod[message.Channel] = false
-			}
+		// If bot is present and is not mod
+		if _, ok := message.User.Badges["moderator"]; ok && message.User.Name == "og_softbot" {
+			channelMod[message.Channel] = true
+		} else {
+			channelMod[message.Channel] = false
 		}
 	})
 
@@ -174,11 +172,9 @@ func main() {
 			passCommand(message.Channel, &message.User, command, args...)
 		} else {
 			botBan(message.Channel, message.Message, &message.User)
-			if v, ok := lurkList[message.User.DisplayName]; ok {
-				if v == message.Channel {
-					say(message.Channel, lurkReturn(message.User.DisplayName))
-					delete(lurkList, message.User.DisplayName)
-				}
+			if v, ok := lurkList[message.User.DisplayName]; ok && v == message.Channel {
+				say(message.Channel, lurkReturn(message.User.DisplayName))
+				delete(lurkList, message.User.DisplayName)
 			}
 			chat(message.Channel, message.Message, &message.User)
 		}
