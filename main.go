@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -32,7 +31,7 @@ var (
 
 	// Concerning the bot itself.
 	endChannel = make(map[string]chan struct{})
-	done       sync.WaitGroup
+	// done       sync.WaitGroup
 
 	channelMod = make(map[string]bool)
 	allChannels []string
@@ -152,16 +151,14 @@ func main() {
 	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
 
-	// Check if bot is modded.
+	// Check if bot is modded
+	// for botBan()
 	ircClient.OnUserStateMessage(func(message twitch.UserStateMessage) {
-		// If bot is present
-		if message.User.Name == "og_softbot" {
-			// If bot is not mod
-			if _, ok := message.User.Badges["moderator"]; ok {
-				channelMod[message.Channel] = true
-			} else {
-				channelMod[message.Channel] = false
-			}
+		// If bot is present and is not mod
+		if _, ok := message.User.Badges["moderator"]; ok && message.User.Name == "og_softbot" {
+			channelMod[message.Channel] = true
+		} else {
+			channelMod[message.Channel] = false
 		}
 	})
 
@@ -174,11 +171,9 @@ func main() {
 			passCommand(message.Channel, &message.User, command, args...)
 		} else {
 			botBan(message.Channel, message.Message, &message.User)
-			if v, ok := lurkList[message.User.DisplayName]; ok {
-				if v == message.Channel {
-					say(message.Channel, lurkReturn(message.User.DisplayName))
-					delete(lurkList, message.User.DisplayName)
-				}
+			if v, ok := lurkList[message.User.DisplayName]; ok && v == message.Channel {
+				say(message.Channel, lurkReturn(message.User.DisplayName))
+				delete(lurkList, message.User.DisplayName)
 			}
 			chat(message.Channel, message.Message, &message.User)
 		}
@@ -244,7 +239,7 @@ func main() {
 					}
 
 					endChannel[name] = make(chan struct{})
-					done.Add(1)
+					// done.Add(1)
 
 					ircClient.Join(name)
 					run(name)
@@ -252,10 +247,10 @@ func main() {
 
 				} else if _, exist := endChannel[name]; exist {
 					// Depart offline channels and stop processes from run().
-					ircClient.Depart(name)
-					log.Println("departed", name)
 					close(endChannel[name])
 					delete(endChannel, name)
+					ircClient.Depart(name)
+					log.Println("departed", name)
 				}
 				// Twitch allows 800 requests per minute.
 				// This will allow us up to 600 channels per minute
@@ -494,7 +489,7 @@ func run(channel string)  {
 		for {
 			select {
 			case <-endChannel[channel]:
-				done.Done()
+				// done.Done()
 				break run
 			default:
 				time.Sleep(time.Minute * time.Duration(73))
@@ -514,7 +509,7 @@ func run(channel string)  {
 		for {
 			select {
 			case <-endChannel[channel]:
-				done.Done()
+				// done.Done()
 				break run
 			default:
 				time.Sleep(time.Minute * time.Duration(60))
