@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -32,7 +31,7 @@ var (
 
 	// Concerning the bot itself.
 	endChannel = make(map[string]chan struct{})
-	done       sync.WaitGroup
+	// done       sync.WaitGroup
 
 	channelMod = make(map[string]bool)
 	allChannels []string
@@ -240,7 +239,7 @@ func main() {
 					}
 
 					endChannel[name] = make(chan struct{})
-					done.Add(1)
+					// done.Add(1)
 
 					ircClient.Join(name)
 					run(name)
@@ -248,10 +247,10 @@ func main() {
 
 				} else if _, exist := endChannel[name]; exist {
 					// Depart offline channels and stop processes from run().
-					ircClient.Depart(name)
-					log.Println("departed", name)
 					close(endChannel[name])
 					delete(endChannel, name)
+					ircClient.Depart(name)
+					log.Println("departed", name)
 				}
 				// Twitch allows 800 requests per minute.
 				// This will allow us up to 600 channels per minute
@@ -490,7 +489,7 @@ func run(channel string)  {
 		for {
 			select {
 			case <-endChannel[channel]:
-				done.Done()
+				// done.Done()
 				break run
 			default:
 				time.Sleep(time.Minute * time.Duration(73))
@@ -510,7 +509,7 @@ func run(channel string)  {
 		for {
 			select {
 			case <-endChannel[channel]:
-				done.Done()
+				// done.Done()
 				break run
 			default:
 				time.Sleep(time.Minute * time.Duration(60))
