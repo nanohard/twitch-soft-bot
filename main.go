@@ -189,6 +189,15 @@ func main() {
 	// Load global vars on program start.
 	for _, v := range channels {
 		allChannels = append(allChannels, v.Name)
+		// Temp fix for quotes.
+		// for i, qt := range v.Quotes {
+		// 	if idx := strings.Index(qt, ")"); idx != -1 {
+		// 		v.Quotes[i] = qt[:idx+1]
+		// 	}
+		// }
+		// if err := db.DB.Update(&channels[c]); err != nil {
+		// 	log.Println("quote fix: db.Update()", err)
+		// }
 	}
 	writeChannels()  // write list of channels, for my personal use
 
