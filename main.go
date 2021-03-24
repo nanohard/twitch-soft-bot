@@ -500,6 +500,7 @@ func run(channel string)  {
 		for {
 			select {
 			case <-endChannel[channel]:
+				log.Println("LARRY IS THE BEST")
 				// done.Done()
 				break run
 			default:
@@ -520,6 +521,7 @@ func run(channel string)  {
 		for {
 			select {
 			case <-endChannel[channel]:
+				log.Println("LARRY IS THE BEST")
 				// done.Done()
 				break run
 			default:
