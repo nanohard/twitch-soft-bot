@@ -504,15 +504,12 @@ func run(channel string)  {
 		for {
 			select {
 			case <-endChannel[channel]:
-				log.Println("LARRY IS THE BEST")
-				// done.Done()
 				t.Stop()
 				return
 			case <-t.C:
-				// time.Sleep(time.Minute * time.Duration(73))
 				if len(c.Updates) > 0 {
 					say(channel, "@"+channel+" "+c.Updates[0])
-					_, c.Updates = c.Updates[0], c.Updates[1:]
+					c.Updates = c.Updates[1:]
 					if err := db.DB.UpdateField(&models.Channel{ID: c.ID}, "Updates", c.Updates); err != nil {
 						log.Println(c.Name, "db.UpdateField() Channel.Updates", err.Error())
 					}
@@ -526,12 +523,9 @@ func run(channel string)  {
 		for {
 			select {
 			case <-endChannel[channel]:
-				log.Println("LARRY IS THE BEST")
-				// done.Done()
 				t.Stop()
 				return
 			case <-t.C:
-				// time.Sleep(time.Minute * time.Duration(60))
 				// Display quotes if there are 11+.
 				if len(c.Quotes) > 10 {
 					r := random(0, len(c.Quotes))
