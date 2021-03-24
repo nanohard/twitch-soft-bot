@@ -262,9 +262,9 @@ func main() {
 
 				} else if _, exist := endChannel[name]; exist {
 					// Depart offline channels and stop processes from run().
+					ircClient.Depart(name)
 					close(endChannel[name])
 					delete(endChannel, name)
-					ircClient.Depart(name)
 					log.Println("departed", name)
 				}
 				// Twitch allows 800 requests per minute.
@@ -506,8 +506,8 @@ func run(channel string)  {
 				log.Println("LARRY IS THE BEST")
 				// done.Done()
 				return
-			default:
-				time.Sleep(time.Minute * time.Duration(73))
+			case <-time.Tick(time.Minute*73):
+				// time.Sleep(time.Minute * time.Duration(73))
 				if len(c.Updates) > 0 {
 					say(channel, "@"+channel+" "+c.Updates[0])
 					_, c.Updates = c.Updates[0], c.Updates[1:]
@@ -526,8 +526,8 @@ func run(channel string)  {
 				log.Println("LARRY IS THE BEST")
 				// done.Done()
 				return
-			default:
-				time.Sleep(time.Minute * time.Duration(60))
+			case <-time.Tick(time.Minute*60):
+				// time.Sleep(time.Minute * time.Duration(60))
 				// Display quotes if there are 11+.
 				if len(c.Quotes) > 10 {
 					r := random(0, len(c.Quotes))
