@@ -135,7 +135,11 @@ func createUser(channel string, displayName string) {
 
 
 func commandLurk(channel string, chUser *twitch.User) {
-	say(channel, chUser.DisplayName + " is putting in the real homie love with a lurk")
+	if broadcaster(chUser) {
+		say(channel, "If you're lurking then who is driving the bus!?")
+	} else {
+		say(channel, chUser.DisplayName+" is putting in the real homie love with a lurk")
+	}
 	lurkList[chUser.DisplayName] = channel
 }
 
