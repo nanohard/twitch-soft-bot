@@ -498,7 +498,7 @@ func chat(channel string, message string, chUser *twitch.User) {
 				}
 
 				clapTime[channel] = time.Now()
-				log.Println("Clapped:", strings.Join(s, " "))
+				log.Println("Clapped in", channel+":", strings.Join(s, " "))
 				return
 			}
 		}
