@@ -261,6 +261,7 @@ func main() {
 					close(endChannel[name])
 					delete(endChannel, name)
 					ircClient.Depart(name)
+					ircClient.OnNoticeMessage()
 					log.Println("departed", name)
 				}
 				// Twitch allows 800 requests per minute.
@@ -496,13 +497,12 @@ func run(channel string)  {
 	}
 
 	go func() {
-		run:
 		for {
 			select {
 			case <-endChannel[channel]:
 				log.Println("LARRY IS THE BEST")
 				// done.Done()
-				break run
+				return
 			default:
 				time.Sleep(time.Minute * time.Duration(73))
 				if len(c.Updates) > 0 {
@@ -517,13 +517,12 @@ func run(channel string)  {
 	}()
 
 	go func() {
-		run:
 		for {
 			select {
 			case <-endChannel[channel]:
 				log.Println("LARRY IS THE BEST")
 				// done.Done()
-				break run
+				return
 			default:
 				time.Sleep(time.Minute * time.Duration(60))
 				// Display quotes if there are 11+.

@@ -1,6 +1,6 @@
 module github.com/nanohard/twitch-soft-bot
 
-go 1.15
+go 1.16
 
 require (
 	github.com/DataDog/zstd v1.4.5 // indirect
@@ -11,7 +11,6 @@ require (
 	github.com/golang/snappy v0.0.2 // indirect
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/google/go-github/v32 v32.1.0
-	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.3.0
 	github.com/nicklaw5/helix v1.6.0
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
