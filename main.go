@@ -261,7 +261,6 @@ func main() {
 					close(endChannel[name])
 					delete(endChannel, name)
 					ircClient.Depart(name)
-					ircClient.OnNoticeMessage()
 					log.Println("departed", name)
 				}
 				// Twitch allows 800 requests per minute.
