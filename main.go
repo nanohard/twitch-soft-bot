@@ -500,13 +500,15 @@ func run(channel string)  {
 	}
 
 	go func() {
+		t := time.NewTicker(time.Minute * 73)
 		for {
 			select {
 			case <-endChannel[channel]:
 				log.Println("LARRY IS THE BEST")
 				// done.Done()
+				t.Stop()
 				return
-			case <-time.Tick(time.Minute*73):
+			case <-t.C:
 				// time.Sleep(time.Minute * time.Duration(73))
 				if len(c.Updates) > 0 {
 					say(channel, "@"+channel+" "+c.Updates[0])
@@ -520,13 +522,15 @@ func run(channel string)  {
 	}()
 
 	go func() {
+		t := time.NewTicker(time.Minute*60)
 		for {
 			select {
 			case <-endChannel[channel]:
 				log.Println("LARRY IS THE BEST")
 				// done.Done()
+				t.Stop()
 				return
-			case <-time.Tick(time.Minute*60):
+			case <-t.C:
 				// time.Sleep(time.Minute * time.Duration(60))
 				// Display quotes if there are 11+.
 				if len(c.Quotes) > 10 {
