@@ -99,6 +99,8 @@ func passCommand(channel string, chUser *twitch.User, command string, args ...st
 		commandRules(channel, args...)
 	case "request":
 		commandRequest(channel, chUser, args...)
+	case "wotd", "wod", "word":
+		commandWOTD(channel, chUser, args...)
 	// Raffle
 	case "raffle":
 		commandRaffle(channel, chUser, args...)

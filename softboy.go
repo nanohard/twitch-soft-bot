@@ -33,6 +33,9 @@ var (
 
 	ogStr = regexp.MustCompile(`og`)
 	al = regexp.MustCompile("[^a-zA-Z]")
+
+	wotd = make(map[string]string)
+	wotdTimer = make(map[string]time.Time)
 )
 
 func init() {
@@ -82,6 +85,22 @@ func commandClap(channel string, chUser *twitch.User, args ...string) {
 	target = strings.TrimPrefix(target, "@")
 
 	say(channel, chUser.DisplayName + " claps " + target + " cheeks")
+}
+
+
+func commandWOTD(channel string, chUser *twitch.User, args ...string)  {
+	if permission(chUser) {
+		switch l := len(args); {
+		case l == 0:
+			say(channel, "Type one word to replace \"clap\" for 24 hours. Ex: !wotd hug")
+		case l > 1:
+			say(channel, "Only one word allowed. Try again.")
+		case l == 1:
+			wotd[channel] = args[0]
+			wotdTimer[channel] = time.Now()
+			say(channel, "Word has been changed to: " + wotd[channel])
+		}
+	}
 }
 
 
@@ -455,19 +474,26 @@ func chat(channel string, message string, chUser *twitch.User) {
 				}
 				// Remove any end punctuation
 				s[len(s)-1] = al.ReplaceAllString(s[len(s)-1], "")
-				switch random(1, 5) {
+				// "clap" or wotd
+				if _, ok := wotdTimer[channel]; ok && time.Now().Sub(wotdTimer[channel]) > time.Duration(24)*time.Hour {
+					delete(wotdTimer, channel)
+					delete(wotd, channel)
+				}
+				w := "clap"
+				if v, ok := wotd[channel]; ok {
+					w = v
+				}
+				switch random(1, 4) {
 				case 1:
-					say(channel, "I'd love to clap "+strings.Join(s, " "))
+					say(channel, "I'd love to " + w + " " +strings.Join(s, " "))
 				case 2:
 					if strings.HasSuffix(s[len(s)-1], "s") {
-						say(channel, "I'm gonna clap those "+strings.Join(s[1:], " ")+"!")
+						say(channel, "I'm gonna " + w + " those "+strings.Join(s[1:], " ")+"!")
 					} else {
-						say(channel, "I'm gonna clap that "+strings.Join(s[1:], " ")+"!")
+						say(channel, "I'm gonna " + w + " that "+strings.Join(s[1:], " ")+"!")
 					}
 				case 3:
-					say(channel, "Yeah, I've clapped "+strings.Join(s, " ")+". No big deal")
-				case 4:
-					say(channel, "There's only one thing to do in this situation... clap "+strings.Join(s,
+					say(channel, "There's only one thing to do in this situation... " + w + " " +strings.Join(s,
 						" "))
 				}
 
