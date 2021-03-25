@@ -39,7 +39,19 @@ func commandQuote(channel string, chUser *twitch.User, args ...string) {
 	}
 
 	// !quote name[0] [message]
-	if length > 1 {
+	rem := []string{"rem", "del", "remove", "delete"}
+	if length == 2 && contains(rem, args[0]) {
+		if n, err := strconv.Atoi(args[1]); err != nil && len(ch.Quotes) < n {
+			ch.Quotes = remove(ch.Quotes, n-1)
+
+			if err := db.DB.Update(&ch); err != nil {
+				log.Println(channel, "quote remove: db.Update()", err)
+				say(channel, "@"+chUser.DisplayName+" Error")
+				return
+			}
+			say(channel, "@"+chUser.DisplayName+" Quote #"+args[1]+" has been removed.")
+		}
+	} else if length > 1 {
 		name := args[0]
 
 		// Generate random time.
@@ -57,7 +69,7 @@ func commandQuote(channel string, chUser *twitch.User, args ...string) {
 		num := len(ch.Quotes)
 
 		if err := db.DB.Update(&ch); err != nil {
-			log.Println(channel, "quote add: db.Save()", err)
+			log.Println(channel, "quote add: db.Update()", err)
 			say(channel, "@"+chUser.DisplayName+" Error")
 			return
 		}

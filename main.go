@@ -234,6 +234,7 @@ func main() {
 
 	// Get stream status (online/offline)
 	go func() {
+		time.Sleep(time.Second * 3)
 		for {
 			// Compare live channels to all channels and depart offline channels
 			for _, name := range allChannels {
@@ -529,7 +530,7 @@ func run(channel string)  {
 				// Display quotes if there are 11+.
 				if len(c.Quotes) > 10 {
 					r := random(0, len(c.Quotes))
-					say(c.Name, c.Quotes[r])
+					say(c.Name, "Quote #" + strconv.Itoa(r+1) + " " + c.Quotes[r])
 				}
 			}
 		}

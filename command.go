@@ -33,7 +33,8 @@ func commandCom(channel string, chUser *twitch.User, request ...string) {
 	if length == 0 {
 		say(channel, "@"+chUser.Name+" !com add <name> <input> ... or ... " +
 			"!com add <+name> <input> for a mod-only command")
-		say(channel, "@"+chUser.Name+" Built-in commands: !quote !counter !raffle !lurk !pray !rules !request ... " +
+		say(channel, "@"+chUser.Name+" Built-in commands: !clap !wotd !quote !counter !raffle !lurk !pray !rules" +
+			" !request ... " +
 			"Use w/o arguments for help.")
 		return
 	}
