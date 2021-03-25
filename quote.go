@@ -21,7 +21,7 @@ func commandQuote(channel string, chUser *twitch.User, args ...string) {
 	length := len(args)
 	// With no arguments, print help.
 	if length == 0 {
-		say(channel, "@"+chUser.DisplayName+" !quote <username> <message>")
+		say(channel, "@"+chUser.DisplayName+" !quote <username> <message> | !quote remove <#>")
 		return
 	}
 
@@ -40,7 +40,7 @@ func commandQuote(channel string, chUser *twitch.User, args ...string) {
 
 	// !quote name[0] [message]
 	rem := []string{"rem", "del", "remove", "delete"}
-	if length == 2 && contains(rem, args[0]) {
+	if length == 2 && permission(chUser) && contains(rem, args[0]) {
 		if n, err := strconv.Atoi(args[1]); err != nil && len(ch.Quotes) < n {
 			ch.Quotes = remove(ch.Quotes, n-1)
 
