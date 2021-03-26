@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"strings"
+	"time"
 
 	"github.com/asdine/storm/q"
 	"github.com/gempir/go-twitch-irc/v2"
@@ -33,6 +34,7 @@ func commandCom(channel string, chUser *twitch.User, request ...string) {
 	if length == 0 {
 		say(channel, "@"+chUser.Name+" !com add <name> <input> ... or ... " +
 			"!com add <+name> <input> for a mod-only command")
+		time.Sleep(time.Second*1)
 		say(channel, "@"+chUser.Name+" Built-in commands: !clap !wotd !quote !counter !raffle !lurk !pray !rules" +
 			" !request ... " +
 			"Use w/o arguments for help.")

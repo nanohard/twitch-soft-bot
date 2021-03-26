@@ -66,7 +66,6 @@ func commandRules(channel string, args ...string) {
 	} else {
 		say(channel, "That's not a number, genius")
 	}
-
 }
 
 
@@ -88,22 +87,6 @@ func commandClap(channel string, chUser *twitch.User, args ...string) {
 }
 
 
-func commandWOTD(channel string, chUser *twitch.User, args ...string)  {
-	if permission(chUser) {
-		switch l := len(args); {
-		case l == 0:
-			say(channel, "Type one word to replace \"clap\" for 24 hours. Ex: !wotd hug")
-		case l > 1:
-			say(channel, "Only one word allowed. Try again.")
-		case l == 1:
-			wotd[channel] = args[0]
-			wotdTimer[channel] = time.Now()
-			say(channel, "Word has been changed to: " + wotd[channel])
-		}
-	}
-}
-
-
 // Join or depart channel.
 func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 	if len(args) == 0 {
@@ -114,6 +97,7 @@ func commandSoftBoy(channel string, chUser *twitch.User, args ...string) {
 	case "join":
 		c := models.Channel{
 			Name: chUser.Name,
+			Lurk: " is putting in the real homie love with a lurk",
 		}
 		if err := db.DB.Save(&c); err != nil {
 			log.Println(channel, "softboy join: db.Save()", err)

@@ -5,4 +5,6 @@ type Channel struct {
 	Name    string  `storm:"unique"`
 	Quotes  []string
 	Updates []string
+	Lurk    string
+	WOTD    string
 }
