@@ -230,7 +230,7 @@ func writeChannels() {
 
 func lurkReturn(user string) string {
 	var s string
-	switch random(0, 4) {
+	switch r := random(0, 4); r {
 	case 0:
 		s = user + " is back like they never left!"
 	case 1:
