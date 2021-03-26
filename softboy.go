@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/asdine/storm/q"
 	"github.com/gempir/go-twitch-irc/v2"
 
 	"github.com/nanohard/twitch-soft-bot/pkg/db"
@@ -33,9 +34,6 @@ var (
 
 	ogStr = regexp.MustCompile(`og`)
 	al = regexp.MustCompile("[^a-zA-Z]")
-
-	wotd = make(map[string]string)
-	wotdTimer = make(map[string]time.Time)
 )
 
 func init() {
@@ -312,22 +310,23 @@ func chat(channel string, message string, chUser *twitch.User) {
 				// ogQuestion. "og" and "?" match, so now match the keyword.
 				for k, v := range ogQuestion {
 					if strings.Contains(msg, k) {
-						ind := strings.Index(msg, k)
-						afterWord := []rune(msg)
-						var a rune
-						beforeWord := []rune(msg)
-						var b rune
-						if len(msg) >= ind+len(k) {
-							if ind+len(k)+1 <= len(msg) {
-								afterWord = afterWord[ind+len(k) : ind+len(k)+1]
-								a = afterWord[0]
+						idx := strings.Index(msg, k)
+						afterWrd := []rune(msg)
+						var c rune
+						beforeWrd := []rune(msg)
+						var d rune
+						if len(msg) >= idx+len(k) {
+							if idx+len(k)+1 <= len(msg) {
+								afterWrd = afterWrd[idx+len(k) : idx+len(k)+1]
+								c = afterWrd[0]
 							}
-							if ind > 0 {
-								beforeWord = beforeWord[ind-1 : ind]
-								b = beforeWord[0]
+							if idx > 0 {
+								beforeWrd = beforeWrd[idx-1 : idx]
+								d = beforeWrd[0]
 							}
 						}
-						if (unicode.IsLetter(a) || unicode.IsLetter(b)) || (unicode.IsPunct(a) && unicode.IsPunct(b)) { // limit false positives
+						// limit false positives
+						if (unicode.IsLetter(c) || unicode.IsLetter(d)) || (unicode.IsPunct(c) && unicode.IsPunct(d)) {
 							continue
 						}
 						log.Println(channel, "Recognized word [", k, "] in msg", msg)
@@ -343,22 +342,23 @@ func chat(channel string, message string, chUser *twitch.User) {
 			// ogChat. "og" matches, so now match the keyword.
 			for k, v := range ogChat {
 				if strings.Contains(msg, k) {
-					ind := strings.Index(msg, k)
-					afterWord := []rune(msg)
-					var a rune
-					beforeWord := []rune(msg)
-					var b rune
-					if len(msg) >= ind+len(k) {
-						if ind+len(k)+1 <= len(msg) {
-							afterWord = afterWord[ind+len(k) : ind+len(k)+1]
-							a = afterWord[0]
+					idx := strings.Index(msg, k)
+					afterWrd := []rune(msg)
+					var c rune
+					beforeWrd := []rune(msg)
+					var d rune
+					if len(msg) >= idx+len(k) {
+						if idx+len(k)+1 <= len(msg) {
+							afterWrd = afterWrd[idx+len(k) : idx+len(k)+1]
+							c = afterWrd[0]
 						}
-						if ind > 0 {
-							beforeWord = beforeWord[ind-1 : ind]
-							b = beforeWord[0]
+						if idx > 0 {
+							beforeWrd = beforeWrd[idx-1 : idx]
+							d = beforeWrd[0]
 						}
 					}
-					if (unicode.IsLetter(a) || unicode.IsLetter(b)) || (unicode.IsPunct(a) && unicode.IsPunct(b)) { // limit false positives
+					// limit false positives
+					if (unicode.IsLetter(c) || unicode.IsLetter(d)) || (unicode.IsPunct(c) && unicode.IsPunct(d)) {
 						continue
 					}
 					log.Println(channel, "Recognized word [", k, "] in msg", msg)
@@ -459,9 +459,23 @@ func chat(channel string, message string, chUser *twitch.User) {
 				// Remove any end punctuation
 				s[len(s)-1] = al.ReplaceAllString(s[len(s)-1], "")
 				// "clap" or wotd
+				var c models.Channel
+				if err := db.DB.Select(q.Eq("Name", channel)).First(&c); err != nil {
+					log.Println("chat() db.Select", err)
+				}
+				if c.Wotd != "" {
+					wotd[channel] = c.Wotd
+					wotdTimer[channel] = c.WotdTimer
+				}
 				if _, ok := wotdTimer[channel]; ok && time.Now().Sub(wotdTimer[channel]) > time.Duration(24)*time.Hour {
 					delete(wotdTimer, channel)
 					delete(wotd, channel)
+					if err := db.DB.UpdateField(&models.Channel{ID: c.ID}, "Wotd", ""); err != nil {
+						log.Println("chat() db.UpdateField", err)
+					}
+					if err := db.DB.UpdateField(&models.Channel{ID: c.ID}, "WotdTimer", time.Time{}); err != nil {
+						log.Println("chat() db.UpdateField", err)
+					}
 				}
 				w := "clap"
 				if v, ok := wotd[channel]; ok {

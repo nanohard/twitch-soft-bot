@@ -16,16 +16,36 @@ import (
 )
 
 
+var (
+	counters = make(map[int]time.Time)
+
+	lurkList    = make(map[string]string) // [name]channel
+	lurkMessage = make(map[string]string)
+
+	wotd      = make(map[string]string)
+	wotdTimer = make(map[string]time.Time)
+)
+
+
 func commandWOTD(channel string, chUser *twitch.User, args ...string) {
 	if permission(chUser) {
-		switch l := len(args); {
-		case l == 0:
+		switch length := len(args); {
+		case length == 0:
 			say(channel, "Type one word to replace \"clap\" for 24 hours. Ex: !wotd hug")
-		case l > 1:
+		case length > 1:
 			say(channel, "Only one word allowed. Try again.")
-		case l == 1:
+		case length == 1:
 			wotd[channel] = args[0]
 			wotdTimer[channel] = time.Now()
+			var c models.Channel
+			if err := db.DB.Select(q.Eq("Name", channel)).First(&c); err != nil {
+				log.Println("commandWOTD() db.Select()", err)
+			}
+			c.Wotd = wotd[channel]
+			c.WotdTimer = wotdTimer[channel]
+			if err := db.DB.Update(&c); err != nil {
+				log.Println("commandWOTD() db.Update()", err)
+			}
 			say(channel, "Word has been changed to: "+wotd[channel])
 		}
 	}

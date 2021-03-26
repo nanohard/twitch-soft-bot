@@ -34,11 +34,6 @@ var (
 	allChannels []string
 	// channelsMap = make(map[string][]models.Channel)
 
-	counters = make(map[int]time.Time)
-
-	lurkList = make(map[string]string)  // [name]channel
-	lurkMessage = make(map[string]string)
-
 	// channelModTime = make(map[string]time.Time)
 	// wantModMessages = []string{
 	// 	"A responsible streamer would mod me",
